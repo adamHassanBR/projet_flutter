@@ -95,6 +95,13 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: _signIn,
                   child: Text('Connexion'),
                 ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/inscription');
+                  },
+                  child: Text("S'inscrire"),
+                ),
+
                 if (_errorMessage.isNotEmpty)
                   Text(
                     _errorMessage,
