@@ -283,7 +283,9 @@ class _LoginPageState extends State<LoginPage>
 
 
                 if (_errorMessage.isNotEmpty)
-                  Text
+                Padding(
+                  padding: EdgeInsets.only(left: 0.0, right: 0.0, top: 15.0, bottom: 0.0),
+                  child : Text
                   (
                     _errorMessage,
                     textAlign: TextAlign.center,
@@ -293,6 +295,7 @@ class _LoginPageState extends State<LoginPage>
                       fontSize: 16.0,
                     ),
                   ),
+                ), 
               ],
             ),
           ),
