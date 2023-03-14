@@ -286,6 +286,7 @@ class _LoginPageState extends State<LoginPage>
                   Text
                   (
                     _errorMessage,
+                    textAlign: TextAlign.center,
                     style: TextStyle
                     (
                       color: Colors.red,
