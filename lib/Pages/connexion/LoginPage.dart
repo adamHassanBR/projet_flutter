@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage>
 
   String _errorMessage = '';
 
+  //Fonction pour se connecter 
   Future<void> _signIn() async 
   {
     try 
@@ -23,6 +24,7 @@ class _LoginPageState extends State<LoginPage>
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
+      //Si on a rien rempli
       if (email.isEmpty || password.isEmpty) 
       {
         setState(() 
@@ -37,6 +39,7 @@ class _LoginPageState extends State<LoginPage>
       // Si l'authentification réussit, aller à la page d'accueil
       Navigator.pushReplacementNamed(context, '/home');
     } 
+    //On catch les erreurs. 
     on FirebaseAuthException catch (e) 
     {
       if (e.code == 'user-not-found') 
@@ -58,6 +61,7 @@ class _LoginPageState extends State<LoginPage>
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) 
@@ -81,6 +85,8 @@ class _LoginPageState extends State<LoginPage>
             color: Colors.white,
           ),
         ),
+
+        //Style des buttons
         elevatedButtonTheme: ElevatedButtonThemeData
         (
           style: ElevatedButton.styleFrom
@@ -148,6 +154,8 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
 
+
+                //Notre TextField de Connexion
                 TextFormField
                 (
                   controller: _emailController,
@@ -181,9 +189,11 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
                   style: const TextStyle
-                  (
+                  (                   
+                    //Couleur du texte tapé par l'utilisateur
                     color: Colors.white,
                   ),
+                  //Valider si toutes les conditions sont bien remplies. 
                   validator: (value) 
                   {
                     if (value!.isEmpty) 
@@ -193,7 +203,11 @@ class _LoginPageState extends State<LoginPage>
                     return null;
                   },
                 ),
+                //Rajoute un espace 
                 const SizedBox(height: 16.0),
+
+
+                //TextField pour le password
                 TextFormField
                 (
                   
@@ -228,9 +242,11 @@ class _LoginPageState extends State<LoginPage>
                   ),
                   ),
                   style: const TextStyle
-                  (
+                  (                    
+                    //Couleur du texte tapé par l'utilisateur
                     color: Colors.white,
                   ),
+                  //On vérrifie qu'il y a bien un mot de passe. 
                   validator: (value) 
                   {
                     if (value!.isEmpty) 
@@ -240,7 +256,12 @@ class _LoginPageState extends State<LoginPage>
                     return null;
                   },
                 ),
+                //Rajoute un espace
                 const SizedBox(height: 100.0),
+
+
+
+                //BOUTON SE CONNECTER
                 ElevatedButton
                 (
                   onPressed: _signIn,
@@ -252,6 +273,10 @@ class _LoginPageState extends State<LoginPage>
                   child: Text('Se connecter'),
                 ),
                 SizedBox(height: 20),
+
+
+
+               //BOUTON INSCRIPTION
                ElevatedButton
                (
                 onPressed: () 
@@ -282,6 +307,7 @@ class _LoginPageState extends State<LoginPage>
               ),
 
 
+                //Si il y a un message d'erreur
                 if (_errorMessage.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(left: 0.0, right: 0.0, top: 15.0, bottom: 0.0),

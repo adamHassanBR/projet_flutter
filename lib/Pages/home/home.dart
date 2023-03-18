@@ -202,3 +202,142 @@ class _HomePageState extends State<HomePage> {
 );
 }
 }
+
+
+
+
+// TEST => Problème - L'api permet de récupérer l'ID, mais il faut appeler l'autre API pour obtenir tute la data du jeu
+
+// import 'dart:convert';
+
+// import 'package:flutter/material.dart';
+// import 'package:http/http.dart' as http;
+
+// class Game {
+//   final int id;
+//   final String name;
+//   final String imageUrl;
+//   final double price;
+
+//   Game({required this.id, required this.name, required this.imageUrl, required this.price});
+
+//   factory Game.fromJson(Map<String, dynamic> json) {
+//     return Game(
+//       id: json['appid'],
+//       name: json['name'],
+//       imageUrl: json['img_logo_url'],
+//       price: 0.0, // You can add a price field if Steam API provides it
+//     );
+//   }
+// }
+
+// class GamesList extends StatefulWidget {
+//   const GamesList({Key? key}) : super(key: key);
+
+//   @override
+//   _GamesListState createState() => _GamesListState();
+// }
+
+// class _GamesListState extends State<GamesList> {
+//   late List<Game> games;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     fetchGames();
+//   }
+
+//   Future<void> fetchGames() async {
+//     final response = await http.get(
+//       Uri.parse('https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/'),
+//     );
+
+//     if (response.statusCode == 200) {
+//       final jsonResponse = json.decode(response.body);
+//       final gamesJson = jsonResponse['response']['games'];
+//       final games = gamesJson.map((e) => Game.fromJson(e)).toList();
+//       setState(() {
+//         this.games = games;
+//       });
+//     } else {
+//       throw Exception('Failed to fetch games');
+//     }
+//   }
+
+//   Widget _buildAllGames() {
+//     if (games == null) {
+//       return Center(child: CircularProgressIndicator());
+//     }
+
+//     return ListView.builder(
+//       itemCount: games.length,
+//       itemBuilder: (context, index) {
+//         final game = games[index];
+//         return _buildGame(game);
+//       },
+//     );
+//   }
+
+//   Widget _buildGame(Game game) {
+//     return InkWell(
+//       onTap: () {
+//         // TODO: Implement on tap action
+//       },
+//       child: Container(
+//         color: Color(0xFF1e262c),
+//         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+//         child: Row(
+//           children: [
+//             Image.network(
+//               'https://steamcdn-a.akamaihd.net/steam/apps/${game.id}/header.jpg',
+//               height: 100.0,
+//               width: 100.0,
+//               fit: BoxFit.cover,
+//             ),
+//             SizedBox(
+//               width: 16.0,
+//             ),
+//             Expanded(
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Text(
+//                     game.name,
+//                     style: TextStyle(
+//                       fontFamily: 'Google Sans',
+//                       color: Colors.white,
+//                       fontSize: 18.0,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                   Text(
+//                     '\$${game.price}',
+//                     style: TextStyle(
+//                       fontFamily: 'Google Sans',
+//                       color: Colors.white.withOpacity(0.5),
+//                       fontSize: 14.0,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             Icon(
+//               Icons.arrow_forward_ios_rounded,
+//               color: Colors.white.withOpacity(0.5),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Games List'),
+//       ),
+//       body: _buildAllGames(),
+//     );
+//   }
+// }

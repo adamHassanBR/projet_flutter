@@ -25,7 +25,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "game ranking",
       debugShowCheckedModeBanner: false,
+      //On appelle le menu connexion en premier
       initialRoute: '/connexion',
+      //On initialise nos routes
       routes: {
         '/connexion': (context) => LoginPage(),
         '/home': (context) => HomePage(),

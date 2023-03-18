@@ -10,12 +10,15 @@ class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  //Création des Variables String pour stocker les valeurs des TextFields
   late String _email, _password, _tempPassword;
 
+  //Fonction lorsqu'on appuye sur le bouton "S'inscrire"
   void _submit() async {
+    //Si le form est valide
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-
+      //On try catch des erreurs 
       try {
         UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
             email: _email, password: _password);
@@ -25,6 +28,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
         // Redirection vers la page de connexion
         Navigator.pushReplacementNamed(context, '/connexion');
+
+        //Catch des erreurs
       } on FirebaseAuthException catch (e) {
         if (e.code == 'weak-password') {
           print('Le mot de passe est trop faible.');
@@ -37,11 +42,13 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
+  //Front de l'appli
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF1a2025),
       
+      //Notre Visuel
       body: Padding(
         padding: const EdgeInsets.fromLTRB(50.0, 100.0, 50.0, 50.0),
         child: Form(
@@ -80,6 +87,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
 
+
+
+              //TextField pour accueillir l'EMAIL
               TextFormField(
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration
@@ -87,6 +97,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   labelText: "Email",
                   labelStyle: TextStyle
                   (
+                    //Pour le label 'Email'
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
@@ -96,7 +107,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   focusedBorder: OutlineInputBorder
                   (
-                    
                     borderSide: BorderSide
                     (
                       color: Colors.white,
@@ -110,16 +120,29 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                 ),
+                style: const TextStyle
+                  (
+                    //Couleur du texte tapé par l'utilisateur
+                    color: Colors.white,
+                  ),
+                  //On ne créé pas le compte tant que ce n'est pas bon. 
                 validator: (input) =>
                     !input!.contains('@') ? 'Entrez une adresse email valide' : null,
+
+                //Quand on va save, on va sauvegarder l'email
                 onSaved: (input) => _email = input!,
               ),
+              //On rajoute de l'espace
               SizedBox(height: 16.0),
 
+
+
+              //TextField pour le Mot de passe de l'utilisateur
               TextFormField(
                 decoration: InputDecoration(
                   labelText: "Mot de passe",
                   labelStyle: TextStyle(
+                    //Pour le label Password
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
@@ -140,6 +163,12 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 obscureText: true,
+                style: const TextStyle
+                  (
+                    //Couleur du texte tapé par l'utilisateur
+                    color: Colors.white,
+                  ),
+                  //Si le password n'est pas comme on le souhaite, alors message d'erreurs + On bloque l'inscription
                 validator: (value) {
                   if (value==null || value.isEmpty){
                     return 'Veuillez renseigner un mot de passe';
@@ -152,14 +181,20 @@ class _SignUpPageState extends State<SignUpPage> {
                     return null;
                   }
                 },
+                //Quand on s'inscrit, on sauvgarde la valeur du password
                 onSaved: (value) => _password = value!,
               ),
+              //On rajoute de l'espace
               SizedBox(height: 16.0),
 
+
+
+              //TextField pour la vérification du mot de passe de l'utilisateur. 
               TextFormField(
                 decoration: InputDecoration(
                   labelText: "Confirmez le mot de passe",
                   labelStyle: TextStyle(
+                    //Pour le Label Confirmation de Mot de passe
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
@@ -179,16 +214,26 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 obscureText: true,
+                style: const TextStyle
+                  (
+                    //Couleur du texte tapé par l'utilisateur
+                    color: Colors.white,
+                  ),
+                  //On va vérifier si les deux mots de passes sont les mêmes. Si NON, on bloque la création
                 validator: (input) {
                   if (input != _tempPassword) {
                     return "Les mots de passe ne correspondent pas";
                   }
                   return null;
                 },
+                //ICI on n'enregistre rien si on s'inscrit
               ),
-
-              
+              //On rajoute de l'espace
               const SizedBox(height: 100.0),
+
+
+
+              //BOUTON INSCRIPTION
               ElevatedButton
               (
                 onPressed: _submit,
@@ -210,7 +255,11 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   ),
               ),
-               SizedBox(height: 20),
+              //On rajoute de l'espace
+              SizedBox(height: 20),
+
+
+              //BOUTON CONNEXION
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/connexion');
