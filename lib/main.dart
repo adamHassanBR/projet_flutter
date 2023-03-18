@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "game ranking",
       debugShowCheckedModeBanner: false,
-      initialRoute: '/inscription',
+      initialRoute: '/connexion',
       routes: {
         '/connexion': (context) => LoginPage(),
         '/home': (context) => HomePage(),

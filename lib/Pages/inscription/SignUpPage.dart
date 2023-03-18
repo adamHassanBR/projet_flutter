@@ -10,7 +10,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  late String _email, _password;
+  late String _email, _password, _tempPassword;
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
@@ -79,6 +79,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
+
               TextFormField(
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration
@@ -114,6 +115,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 onSaved: (input) => _email = input!,
               ),
               SizedBox(height: 16.0),
+
               TextFormField(
                 decoration: InputDecoration(
                   labelText: "Mot de passe",
@@ -138,10 +140,54 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 obscureText: true,
-                validator: (input) =>
-                    input!.length < 6 ? 'Le mot de passe doit contenir au moins 6 caractères' : null,
-                onSaved: (input) => _password = input!,
+                validator: (value) {
+                  if (value==null || value.isEmpty){
+                    return 'Veuillez renseigner un mot de passe';
+                  }
+                  else if (value!.length < 6) {
+                    return 'Le mot de passe doit contenir au moins 6 caractères';
+                  }
+                  else {
+                    _tempPassword= value;
+                    return null;
+                  }
+                },
+                onSaved: (value) => _password = value!,
               ),
+              SizedBox(height: 16.0),
+
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: "Confirmez le mot de passe",
+                  labelStyle: TextStyle(
+                    fontFamily: 'Google Sans',
+                    color: Colors.white,
+                  ),
+                  filled: true,
+                  fillColor: Color(0xFF1e262c),
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.white,
+                      width: 2.0,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+                obscureText: true,
+                validator: (input) {
+                  if (input != _tempPassword) {
+                    return "Les mots de passe ne correspondent pas";
+                  }
+                  return null;
+                },
+              ),
+
+              
               const SizedBox(height: 100.0),
               ElevatedButton
               (
