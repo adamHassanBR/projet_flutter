@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+//permet de venir récupérer les IDs du top 100 des jeux sur Steam et les renvoient sous forme de tableau de int
 Future<List<int>> fetchGameIds() async {
+  //Requête API 
   final response = await http.get(Uri.parse('https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/'));
   
   if (response.statusCode == 200) {
@@ -16,6 +18,7 @@ Future<List<int>> fetchGameIds() async {
   }
 }
 
+//Créé notre classe Game qui va contenir 1 jeu et ses informations. 
 class Game {
   final int id;
   final String name;
@@ -24,14 +27,17 @@ class Game {
   Game({required this.id, required this.name, required this.imageUrl});
 }
 
+//Crée notre fetch qui va aller chercher les informations d'un jeu en fonction de son ID (Récupérée avant)
 Future<List<Game>> fetchGames(List<int> gameIds) async {
   final List<Game> games = [];
 
   for (int id in gameIds) {
+    //requête API
     final response = await http.get(Uri.parse('https://store.steampowered.com/api/appdetails?appids=$id'));
 
     if (response.statusCode == 200) {
       final Map<String, dynamic>? jsonResponse = json.decode(response.body)[id.toString()]['data'];
+      //Pour s'assurer que nos informations ne sont pas null (Au cas ou un jeu ait été retiré ou autre)
       if (jsonResponse != null) {
         final String name = jsonResponse['name'];
         final String imageUrl = jsonResponse['header_image'];
@@ -39,33 +45,39 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         games.add(game);
       }
     } else {
+      //Si ca ne fonctionne pas
       throw Exception('Failed to fetch game details');
     }
   }
-
+  //On renvoie la liste de nos jeux et de leurs informations
   return games;
 }
 
+//Class principale 
 class HomePage extends StatefulWidget {
   @override
   _GameListPageState createState() => _GameListPageState();
 }
 
+//On va créer notre Game list qui extend Home page
 class _GameListPageState extends State<HomePage> {
   late Future<List<Game>> _futureGames;
 
+//Initialisation
   @override
   void initState() {
     super.initState();
     _futureGames = _loadGames();
   }
 
+//On va venir charger les Ids des jeux, puis leurs informations 
   Future<List<Game>> _loadGames() async {
     final gameIds = await fetchGameIds();
     final games = await fetchGames(gameIds);
     return games;
   }
 
+//Affichage des jeux
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,6 +105,7 @@ class _GameListPageState extends State<HomePage> {
             );
           }
           return Center(
+            //L'indicateur de Progrssion 
             child: CircularProgressIndicator(),
           );
         },
