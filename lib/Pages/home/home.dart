@@ -59,11 +59,11 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
           //Si le prix du jeu est correctement renseigné 
           if(jsonResponse2['initial_formatted'] != "")
           {
-            //On récupère le prix 
+            //On récupère le prix initial (avant réduction)
             price = jsonResponse2['initial_formatted'];
           } else {
-            //Sinon on le met gratuit
-            price = "Gratuit";
+            //Sinon on récupère le prix final
+            price = jsonResponse2['final_formatted'];
           }
         } else {
           //Sinon on le met gratuit
