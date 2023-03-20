@@ -14,7 +14,7 @@ Future<List<int>> fetchGameIds() async {
     final List<int> ids = ranks.map((rank) => rank['appid'] as int).toList();
     return ids;
   } else {
-    throw Exception('Failed to fetch game IDs');
+    throw Exception('Echec du Fetch les Ids des Jeux');
   }
 }
 
@@ -23,8 +23,10 @@ class Game {
   final int id;
   final String name;
   final String imageUrl;
+  final List<dynamic> publisher;
+  final String price;
 
-  Game({required this.id, required this.name, required this.imageUrl});
+  Game({required this.id, required this.name, required this.publisher, required this.price,required this.imageUrl});
 }
 
 //Crée notre fetch qui va aller chercher les informations d'un jeu en fonction de son ID (Récupérée avant)
@@ -36,17 +38,45 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
     final response = await http.get(Uri.parse('https://store.steampowered.com/api/appdetails?appids=$id'));
 
     if (response.statusCode == 200) {
+      //On va aller dans la partie 'Data' de notre jeu
       final Map<String, dynamic>? jsonResponse = json.decode(response.body)[id.toString()]['data'];
       //Pour s'assurer que nos informations ne sont pas null (Au cas ou un jeu ait été retiré ou autre)
       if (jsonResponse != null) {
+        //On récupère le nom
         final String name = jsonResponse['name'];
+        //On récupère l'image
         final String imageUrl = jsonResponse['header_image'];
-        final Game game = Game(id: id, name: name, imageUrl: imageUrl);
+        //On récupère le créateur 
+        final List<dynamic> publisher = jsonResponse['publishers'];
+        
+        //On va venir se focaliser sur la partie 'Price' de 'Data' pour pouvoir récupérer le jeu
+        final Map<String, dynamic>? jsonResponse2 = json.decode(response.body)[id.toString()]['data']['price_overview'];
+        
+        //On créé notre var Prix
+        String price; 
+        //Si le jeu n'est pas gratuit (S'il est gratuit price_overview n'existe pas dans le code)
+        if (jsonResponse2 != null) {
+          //Si le prix du jeu est correctement renseigné 
+          if(jsonResponse2['initial_formatted'] != "")
+          {
+            //On récupère le prix 
+            price = jsonResponse2['initial_formatted'];
+          } else {
+            //Sinon on le met gratuit
+            price = "Gratuit";
+          }
+        } else {
+          //Sinon on le met gratuit
+          price = "Gratuit";
+        }
+
+        //On envoie tout dans notre constructeur
+        final Game game = Game(id: id, name: name, publisher: publisher, price : price,imageUrl: imageUrl);
         games.add(game);
       }
     } else {
       //Si ca ne fonctionne pas
-      throw Exception('Failed to fetch game details');
+      throw Exception('Echec du Fetch des informations des Jeux');
     }
   }
   //On renvoie la liste de nos jeux et de leurs informations
@@ -82,7 +112,7 @@ class _GameListPageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Liste de jeux vidéo'),
+        title: Text('Les meilleures ventes'),
       ),
       body: FutureBuilder<List<Game>>(
         future: _futureGames,
@@ -93,10 +123,38 @@ class _GameListPageState extends State<HomePage> {
               itemCount: games.length,
               itemBuilder: (context, index) {
                 final game = games[index];
-                return ListTile(
+                //On vient créer une carte pour notre jeu
+                return    Card(
+                  child: ListTile(
+                  //On affiche en premier l'image
                   leading: Image.network(game.imageUrl),
+                  //puis le titre
                   title: Text(game.name),
-                );
+                  //Pour les sous tritres on veut le créateur et le prix, donc on va créer une colonne
+                  subtitle: Column(
+                    //Et on veut qu'elle soit alignée avec le début 
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    //On créé nos subtitles
+                    children: [
+                      Text(game.publisher.first),
+                      //On veut afficher ' Prix = xxx€ ' seulement si le jeu n'est pas gratuit
+                      Row (
+                        children : [
+                          //Si le prix n'est pas gratuit 
+                          if(game.price != "Gratuit")
+                            Text("Prix: "),
+                          //Et dans tous les cas 
+                          Text(game.price),
+                        ],
+                      )
+                    ],
+                  ),
+                  // subtitle:  Text(game.publisher.first),
+                  trailing: Icon(Icons.more_vert),
+                  isThreeLine: true,
+                  ),
+                  );
+
               },
             );
           } else if (snapshot.hasError) {
