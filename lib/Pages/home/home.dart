@@ -109,67 +109,143 @@ class _GameListPageState extends State<HomePage> {
 
 //Affichage des jeux
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Les meilleures ventes'),
-      ),
-      body: FutureBuilder<List<Game>>(
-        future: _futureGames,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final games = snapshot.data!;
-            return ListView.builder(
-              itemCount: games.length,
-              itemBuilder: (context, index) {
-                final game = games[index];
-                //On vient créer une carte pour notre jeu
-                return    Card(
-                  child: ListTile(
-                  //On affiche en premier l'image
-                  leading: Image.network(game.imageUrl),
-                  //puis le titre
-                  title: Text(game.name),
-                  //Pour les sous tritres on veut le créateur et le prix, donc on va créer une colonne
-                  subtitle: Column(
-                    //Et on veut qu'elle soit alignée avec le début 
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    //On créé nos subtitles
+Widget build(BuildContext context) {
+  return Scaffold(
+    //A modifier pour la suite -----------
+    appBar: AppBar(
+      title: Text('Accueil'),
+    ),
+    backgroundColor: Color(0xFF1A2025), // Ajouter la couleur de fond
+    body: FutureBuilder<List<Game>>(
+      future: _futureGames,
+      builder: (context, snapshot) {
+        //Si notre snapshot à de l'information concernant le jeu
+        if (snapshot.hasData) {
+          final games = snapshot.data!;
+          return ListView.builder(
+            itemCount: games.length,
+            itemBuilder: (context, index) {
+              final game = games[index];
+              //On vient créer une carte pour notre jeu
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5), // Ajouter un bord arrondi
+                ),
+                margin: EdgeInsets.symmetric(vertical: 7, horizontal: 13), // Ajouter une marge autour de la carte
+                child: Container(
+                  height: 115, // Ajouter une hauteur personnalisée
+                  decoration: BoxDecoration(
+                    color: Color(0xFF212B33), // Ajouter la couleur de fond des ListTitle
+                    borderRadius: BorderRadius.circular(5), // Ajouter un bord arrondi au container
+                  ),
+                  child: Row(
                     children: [
-                      Text(game.publisher.first),
-                      //On veut afficher ' Prix = xxx€ ' seulement si le jeu n'est pas gratuit
-                      Row (
-                        children : [
-                          //Si le prix n'est pas gratuit 
-                          if(game.price != "Gratuit")
-                            Text("Prix: "),
-                          //Et dans tous les cas 
-                          Text(game.price),
-                        ],
+                      // On affiche l'image à gauche
+                      Expanded(
+                        child: Image.network(
+                          game.imageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // Puis les infos à droite
+                      Expanded(
+                        flex: 2,
+                        child: Padding(
+                          padding: EdgeInsets.all(17),
+                          child: Column(
+                            //permet d'aligner en horizontal et en vertical
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // On réduit la taille du titre à 16
+                              Text(game.name, style: TextStyle(fontSize: 15, color: Colors.white,)),
+                              SizedBox(height: 2),
+                              // On réduit la taille du sous-titre à 13
+                              Text(game.publisher.first, style: TextStyle(fontSize: 13, color: Colors.white,)),
+                              SizedBox(height: 9),
+                              // On affiche "Gratuit" ou "Prix: xxx" selon que le prix est gratuit ou non
+                              Row(
+                                children: [
+                                  if (game.price != "Gratuit") Text("Prix: ", style: TextStyle(fontSize: 13, color: Colors.white, decoration : TextDecoration.underline),),
+                                  Text(game.price, style:TextStyle(fontSize: 12, color: Colors.white,)),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                      // On ajoute le bouton "En savoir plus" à droite
+                      GestureDetector(
+                        //Dès qu'on appuie sur le bouton 
+                        onTap: () {
+                          //A modifier pour la suite -----------
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                //Ici on affiche une alerte disant qu'on a cliqué sur le bouton du jeu. 
+                                title: Text("En savoir plus"),
+                                content: Text("Vous avez cliqué sur le bouton pour le jeu : ${game.name}"),
+                                actions: [
+                                  ElevatedButton(
+                                    //Bouton pour fermer. 
+                                    child: Text("Fermer"),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        //Notre bouton est dans un Container 
+                        child: Container(
+                          //Permet de prendre toute la hauteur 
+                          height: double.infinity,
+                          //On blinde la largeur (pour faire un carré)
+                          width: 115,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF626AF6),
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(5),
+                              bottomRight: Radius.circular(5),
+                            ),
+                          ),
+                          //On le centre 
+                          child: Center(
+                            //On prends la hauteur de la carte 
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                "En savoir plus",
+                                style: TextStyle(color: Colors.white, fontSize: 18,),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        )
                       )
                     ],
                   ),
-                  // subtitle:  Text(game.publisher.first),
-                  trailing: Icon(Icons.more_vert),
-                  isThreeLine: true,
-                  ),
-                  );
-
-              },
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text('${snapshot.error}'),
-            );
-          }
-          return Center(
-            //L'indicateur de Progrssion 
-            child: CircularProgressIndicator(),
+                ),
+              );
+            },
           );
-        },
-      ),
-    );
-  }
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text('${snapshot.error}'),
+          );
+        }
+        return Center(
+          //L'indicateur de Progrssion
+          child: CircularProgressIndicator(),
+        );
+      },
+    ),
+  );
+}
+
 }
 
 
