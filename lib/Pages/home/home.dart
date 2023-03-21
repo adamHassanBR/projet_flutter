@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -107,16 +107,102 @@ class _GameListPageState extends State<HomePage> {
     return games;
   }
 
-//Affichage des jeux
+//Affichage de l'interface
   @override
 Widget build(BuildContext context) {
   return Scaffold(
-    //A modifier pour la suite -----------
-    appBar: AppBar(
-      title: Text('Accueil'),
+    //Menu supperieur (Accueil)
+     appBar: AppBar(
+      //On affiche en ligne 
+      title: Row(
+        children: [
+          Expanded(
+            //ici le texte accueil qu'on va venir mettre à gauche 
+            child: Text(
+              'Accueil',
+              textAlign: TextAlign.left,
+            ),
+          ),
+          //Puis on va afficher les SVG de l'etoile et du like
+          SvgPicture.asset(
+            'assets/svg/like.svg',
+            height: 20,
+            width: 20,
+          ),
+          //On ajoute un espace entre les 2 Svg 
+          SizedBox(width: 40),
+          SvgPicture.asset(
+            'assets/svg/whishlist.svg',
+            height: 20,
+            width: 20,
+          ),
+        ],
+      ),
+      //Et on modifie la couleur de fond. 
+      backgroundColor: Color(0xFF1A2025),
     ),
-    backgroundColor: Color(0xFF1A2025), // Ajouter la couleur de fond
-    body: FutureBuilder<List<Game>>(
+    
+    //On vient afficher le reste de la page 
+     body: Column(
+      children: [
+        //La SearchBar
+        _buildSearchBar(),
+        Expanded(
+          //La liste des jeux
+          child: _buildGamesList(),
+        ),
+      ],
+      
+    ),
+    backgroundColor: Color(0xFF1A2025),
+  );
+}
+
+//Methode construction de la barre de recherche 
+Widget _buildSearchBar() {
+  return AppBar(
+    title: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFF1e262c),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              
+              child: TextField(
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
+                decoration: InputDecoration(
+                  fillColor: Color(0xFF1e262c),
+                  hintText: "Rechercher un jeu",
+                  hintStyle: TextStyle(color: Colors.white),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 15.0, horizontal: 10.0),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Icon(Icons.search, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    ),
+    backgroundColor: Color(0xFF1e262c),
+    elevation: 0.0,
+  );
+}
+
+
+//Methode de construction de la liste des Jeux. 
+FutureBuilder<List<Game>> _buildGamesList(){
+  return FutureBuilder<List<Game>>(
       future: _futureGames,
       builder: (context, snapshot) {
         //Si notre snapshot à de l'information concernant le jeu
@@ -241,11 +327,9 @@ Widget build(BuildContext context) {
           //L'indicateur de Progrssion
           child: CircularProgressIndicator(),
         );
-      },
-    ),
-  );
-}
-
+      }, 
+    );
+  }
 }
 
 
