@@ -107,6 +107,8 @@ class _GameListPageState extends State<HomePage> {
     return games;
   }
 
+
+
 //Affichage de l'interface
   @override
 Widget build(BuildContext context) {
@@ -154,9 +156,12 @@ Widget build(BuildContext context) {
       ],
       
     ),
+
     backgroundColor: Color(0xFF1A2025),
   );
 }
+
+
 
 //Methode construction de la barre de recherche 
 Widget _buildSearchBar() {
@@ -187,8 +192,9 @@ Widget _buildSearchBar() {
               ),
             ),
             Padding(
+              //la loupe 
               padding: const EdgeInsets.only(right: 8.0),
-              child: Icon(Icons.search, color: Colors.white),
+              child: Icon(Icons.search, color: Color(0xFF626AF6)),
             ),
           ],
         ),
@@ -200,6 +206,108 @@ Widget _buildSearchBar() {
 }
 
 
+
+
+//Widget du jeu principal, affiché en haut de l'écran d'acceuil
+Widget _buildBackgroundImage() {
+  return Container(
+    //On vient créer notre Box Decoration qui accueillra notre Image de fond 
+    decoration: BoxDecoration(
+      image: DecorationImage(
+        image: NetworkImage(
+          //On load l'image 
+          'https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/812140\/ss_0ef33c0f230da6ebac94f5959f0e0a8bbc48cf8a.600x338.jpg',
+        ),
+        //On lui fait remplir toute la surface
+        fit: BoxFit.cover,
+        colorFilter: ColorFilter.mode(
+          //on lui donne une opacity pour pouvoir lire les élements affichés dessus
+          Colors.black.withOpacity(0.3),
+          BlendMode.darken,
+        ),
+      ),
+    ),
+    //On va créer un padding horizontal
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      //On va créer un padding au top et bot 
+      child: Padding(
+        padding: const EdgeInsets.only(top: 80, bottom: 10),
+        //On affiche en Row 1- Title + Desc + Boutton et L'image
+        child: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              //Notre colonne d'affichage de Title + Desc + Boutton
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  //titre
+                  Text(
+                    "Assassin's Creed® Odyssey",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24.0,
+                    ),
+                  ),
+                  SizedBox(height: 10.0),
+                  //Description
+                  Text(
+                    "Enhance your Assassin's Creed® Odyssey experience with the Ultimate Edition.",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13.0,
+                    ),
+                  ),
+                  SizedBox(height: 8.0),
+                  //notre bouton
+                  ElevatedButton(
+                    //Quand il est pressé on fait un évenement
+                    onPressed: () {
+                      //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (en String)
+                      Navigator.pushReplacementNamed(context, '/detail_jeu', arguments: "812140");
+                    },
+                    child: Text(
+                      "En savoir plus",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.0,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      primary: Color(0xFF626AF6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 30.0,
+                        vertical: 10.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16.0),
+            //On affiche notre image du jeu
+            Expanded(
+              flex: 1,
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Image.network(
+                  'https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/812140\/header.jpg?t=1670596226',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+
+
 //Methode de construction de la liste des Jeux. 
 FutureBuilder<List<Game>> _buildGamesList(){
   return FutureBuilder<List<Game>>(
@@ -209,9 +317,40 @@ FutureBuilder<List<Game>> _buildGamesList(){
         if (snapshot.hasData) {
           final games = snapshot.data!;
           return ListView.builder(
-            itemCount: games.length,
+            itemCount: games.length +1,
             itemBuilder: (context, index) {
-              final game = games[index];
+              //Si on est le premier Indeex (Va afficher l'image principale et le texte)
+              if (index == 0) {
+                //on renvoie un conteneur
+                return Container(
+                  child: Column(
+                    children: [
+                      //Pour afficher notre Jeu principal
+                      Padding(
+                        padding: EdgeInsets.only(top: 15, bottom: 30.0),
+                        child: _buildBackgroundImage(),
+                      ),
+                      //Pour afficher le texte des Meilleures ventes
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          //Padding de droite et gauche
+                          padding: EdgeInsets.symmetric(horizontal: 13.0),
+                          child: Padding(
+                            //Padding avec les cartes
+                            padding: EdgeInsets.only(bottom: 10), // ajouter du padding après le texte
+                            child: Text(
+                              "Les meilleures ventes",
+                              style: TextStyle(fontSize: 16, color: Colors.white, decoration : TextDecoration.underline),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }else {
+              final game = games[index -1];
               //On vient créer une carte pour notre jeu
               return Card(
                 shape: RoundedRectangleBorder(
@@ -228,9 +367,12 @@ FutureBuilder<List<Game>> _buildGamesList(){
                     children: [
                       // On affiche l'image à gauche
                       Expanded(
-                        child: Image.network(
-                          game.imageUrl,
-                          fit: BoxFit.cover,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: Image.network(
+                            game.imageUrl,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       // Puis les infos à droite
@@ -264,26 +406,8 @@ FutureBuilder<List<Game>> _buildGamesList(){
                       GestureDetector(
                         //Dès qu'on appuie sur le bouton 
                         onTap: () {
-                          //A modifier pour la suite -----------
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                //Ici on affiche une alerte disant qu'on a cliqué sur le bouton du jeu. 
-                                title: Text("En savoir plus"),
-                                content: Text("Vous avez cliqué sur le bouton pour le jeu : ${game.name}"),
-                                actions: [
-                                  ElevatedButton(
-                                    //Bouton pour fermer. 
-                                    child: Text("Fermer"),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
+                          //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (et on le converti en String)
+                          Navigator.pushReplacementNamed(context, '/detail_jeu', arguments: game.id.toString());
                         },
                         //Notre bouton est dans un Container 
                         child: Container(
@@ -316,6 +440,7 @@ FutureBuilder<List<Game>> _buildGamesList(){
                   ),
                 ),
               );
+              }
             },
           );
         } else if (snapshot.hasError) {
@@ -331,348 +456,3 @@ FutureBuilder<List<Game>> _buildGamesList(){
     );
   }
 }
-
-
-// import 'package:flutter/material.dart';
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({Key? key}) : super(key: key);
-
-//   @override
-//   _HomePageState createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: TextField(
-//           decoration: InputDecoration(
-//             hintText: "Rechercher un jeu",
-//             hintStyle: TextStyle(color: Colors.white),
-//             prefixIcon: Icon(Icons.search),
-//             filled: true,
-//             fillColor: Color(0xFF1e262c),
-//             border: InputBorder.none,
-//           ),
-//         ),
-//         backgroundColor: Color(0xFF1e262c),
-//         elevation: 0.0,
-//       ),
-//       backgroundColor: Color(0xFF1e262c),
-//       body: SingleChildScrollView(
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Padding(
-//               padding: const EdgeInsets.only(
-//                 top: 20.0,
-//                 left: 20.0,
-//                 bottom: 10.0,
-//               ),
-//               child: Text(
-//                 "Jeux les plus joués",
-//                 style: TextStyle(
-//                   fontFamily: 'Google Sans',
-//                   color: Colors.white,
-//                   fontSize: 20.0,
-//                 ),
-//               ),
-//             ),
-//             _buildMostPlayedGame(),
-//             Padding(
-//               padding: const EdgeInsets.only(
-//                 top: 20.0,
-//                 left: 20.0,
-//                 bottom: 10.0,
-//               ),
-//               child: Text(
-//                 "Tous les jeux",
-//                 style: TextStyle(
-//                   fontFamily: 'Google Sans',
-//                   color: Colors.white,
-//                   fontSize: 20.0,
-//                 ),
-//               ),
-//             ),
-//             _buildAllGames(),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildMostPlayedGame() {
-//     return Container(
-//       padding: const EdgeInsets.all(20.0),
-//       child: Column(
-//         children: [
-//           // TODO: Add game image
-//           SizedBox(height: 10.0),
-//           Text(
-//             "Titre du jeu",
-//             style: TextStyle(
-//               fontFamily: 'Google Sans',
-//               color: Colors.white,
-//               fontSize: 18.0,
-//             ),
-//           ),
-//           SizedBox(height: 10.0),
-//           Text(
-//             "Courte description du jeu",
-//             style: TextStyle(
-//               fontFamily: 'Google Sans',
-//               color: Colors.white.withOpacity(0.5),
-//               fontSize: 14.0,
-//             ),
-//           ),
-//           SizedBox(height: 20.0),
-//           ElevatedButton(
-//             onPressed: () {},
-//             child: Text(
-//               "En savoir plus",
-//               style: TextStyle(
-//                 fontFamily: 'Google Sans',
-//                 color: Colors.white,
-//               ),
-//             ),
-//             style: ElevatedButton.styleFrom(
-//               primary: Color(0xFF636AF6),
-//               shape: RoundedRectangleBorder(
-//                 borderRadius: BorderRadius.circular(10.0),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//       decoration: BoxDecoration(
-//         image: DecorationImage(
-//           image: NetworkImage(
-//               "https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg?t=1628649045"),
-//           fit: BoxFit.cover,
-//         ),
-//         borderRadius: BorderRadius.circular(10.0),
-//       ),
-//     );
-//   }
-
-//   Widget _buildAllGames() 
-//   {
-//     return Column
-//     (
-//       children: 
-//       [
-//         _buildGame("Nom du jeu 1", "\$9.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//         _buildGame("Nom du jeu 2", "\$19.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//         _buildGame("Nom du jeu 3", "\$29.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//         _buildGame("Nom du jeu 4", "\$39.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//         _buildGame("Nom du jeu 5", "\$49.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//         _buildGame("Nom du jeu 6", "\$59.99"),
-//         Divider(height: 1.0, color: Colors.white.withOpacity(0.5)),
-//       ],
-//     );
-//   }
-
-//   Widget _buildGame(String title, String price) 
-//   {
-//     return InkWell
-//     (
-//       onTap: () 
-//       {
-//       // TODO: Implement on tap action
-//       },
-//     child: Container
-//     (
-//       color: Color(0xFF1e262c),
-//       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-//       child: Row
-//       (
-//         children: 
-//         [
-//         Expanded
-//         (
-//           child: Column
-//           (
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: 
-//             [
-//               Text
-//               (
-//                 title,
-//                 style: TextStyle
-//                 (
-//                   fontFamily: 'Google Sans',
-//                   color: Colors.white,
-//                   fontSize: 18.0,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               Text
-//               (
-//                 price,
-//                 style: TextStyle
-//                 (
-//                   fontFamily: 'Google Sans',
-//                   color: Colors.white.withOpacity(0.5),
-//                   fontSize: 14.0,
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//         Icon
-//         (
-//           Icons.arrow_forward_ios_rounded,
-//           color: Colors.white.withOpacity(0.5),
-//         ),
-//       ],
-//     ),
-//   ),
-// );
-// }
-// }
-
-
-
-
-// TEST => Problème - L'api permet de récupérer l'ID, mais il faut appeler l'autre API pour obtenir tute la data du jeu
-
-// import 'dart:convert';
-
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-
-// class Game {
-//   final int id;
-//   final String name;
-//   final String imageUrl;
-//   final double price;
-
-//   Game({required this.id, required this.name, required this.imageUrl, required this.price});
-
-//   factory Game.fromJson(Map<String, dynamic> json) {
-//     return Game(
-//       id: json['appid'],
-//       name: json['name'],
-//       imageUrl: json['img_logo_url'],
-//       price: 0.0, // You can add a price field if Steam API provides it
-//     );
-//   }
-// }
-
-// class GamesList extends StatefulWidget {
-//   const GamesList({Key? key}) : super(key: key);
-
-//   @override
-//   _GamesListState createState() => _GamesListState();
-// }
-
-// class _GamesListState extends State<GamesList> {
-//   late List<Game> games;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     fetchGames();
-//   }
-
-//   Future<void> fetchGames() async {
-//     final response = await http.get(
-//       Uri.parse('https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/'),
-//     );
-
-//     if (response.statusCode == 200) {
-//       final jsonResponse = json.decode(response.body);
-//       final gamesJson = jsonResponse['response']['games'];
-//       final games = gamesJson.map((e) => Game.fromJson(e)).toList();
-//       setState(() {
-//         this.games = games;
-//       });
-//     } else {
-//       throw Exception('Failed to fetch games');
-//     }
-//   }
-
-//   Widget _buildAllGames() {
-//     if (games == null) {
-//       return Center(child: CircularProgressIndicator());
-//     }
-
-//     return ListView.builder(
-//       itemCount: games.length,
-//       itemBuilder: (context, index) {
-//         final game = games[index];
-//         return _buildGame(game);
-//       },
-//     );
-//   }
-
-//   Widget _buildGame(Game game) {
-//     return InkWell(
-//       onTap: () {
-//         // TODO: Implement on tap action
-//       },
-//       child: Container(
-//         color: Color(0xFF1e262c),
-//         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-//         child: Row(
-//           children: [
-//             Image.network(
-//               'https://steamcdn-a.akamaihd.net/steam/apps/${game.id}/header.jpg',
-//               height: 100.0,
-//               width: 100.0,
-//               fit: BoxFit.cover,
-//             ),
-//             SizedBox(
-//               width: 16.0,
-//             ),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     game.name,
-//                     style: TextStyle(
-//                       fontFamily: 'Google Sans',
-//                       color: Colors.white,
-//                       fontSize: 18.0,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                   Text(
-//                     '\$${game.price}',
-//                     style: TextStyle(
-//                       fontFamily: 'Google Sans',
-//                       color: Colors.white.withOpacity(0.5),
-//                       fontSize: 14.0,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             Icon(
-//               Icons.arrow_forward_ios_rounded,
-//               color: Colors.white.withOpacity(0.5),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Games List'),
-//       ),
-//       body: _buildAllGames(),
-//     );
-//   }
-// }

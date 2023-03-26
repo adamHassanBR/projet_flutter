@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:projet_flutter/Pages/connexion/LoginPage.dart';
 import 'package:projet_flutter/Pages/inscription/SignUpPage.dart';
+import 'package:projet_flutter/Pages/detail_jeu/detail_jeu.dart';
 import 'package:projet_flutter/Pages/home/home.dart'; 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -32,6 +33,10 @@ class MyApp extends StatelessWidget {
         '/connexion': (context) => LoginPage(),
         '/home': (context) => HomePage(),
         '/inscription': (context) => SignUpPage(),
+        '/detail_jeu': (context) {
+          final String gameId = ModalRoute.of(context)!.settings.arguments as String;
+          return InfoJeu(gameId: gameId);
+        },
       },
     );
   }
