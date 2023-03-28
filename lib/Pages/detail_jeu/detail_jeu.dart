@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 
 
 //On va venir fetcher toute l'information de notre jeu en fonction de son ID
@@ -42,13 +44,54 @@ Future<Map<String, dynamic>> fetchGameDetails(String gameId) async {
   }
 }
 
+
+//permet de Fetch tous les commentaires d'un jeu 
+Future<List<Map<String, dynamic>>> fetchGameReviews(String gameId) async {
+  final url = 'https://store.steampowered.com/appreviews/$gameId?json=1';
+  final response = await http.get(Uri.parse(url));
+  if (response.statusCode == 200) {
+    final jsonResponse = jsonDecode(response.body)['reviews'];
+    //On veut que ce soit sous la forme de tableau
+    final List<Map<String, dynamic>> reviews = [];
+
+    for (var review in jsonResponse) {
+      //On vient recupérer son steam ID
+      final idSteam = review['author']['steamid'];
+      //On vient récupérer son vote
+      final etoileVote = review['voted_up'];
+      //On vient récupérer sa review
+      final commentaireClient = review['review'];
+
+      reviews.add({
+        'idSteam': idSteam,
+        'etoileVote': etoileVote,
+        'commentaireClient': commentaireClient,
+      });
+    }
+
+    return reviews;
+  } else {
+    throw Exception('Echec du chargement des Commentaires');
+  }
+}
+
+
 //Fonction qui permet de clarifier la description en supprimant les balises. 
 String cleanDescription(String description) {
   // Remplacer toutes les balises <br> par un retour à la ligne
   description = description.replaceAll('<br>', '\n');
+  description = description.replaceAll('<br />', '\n');
+  description = description.replaceAll('<br/>', '\n');
 
-  // Supprimer les balises <p>, <h1>, <h2> ... et les balises <img> et <strong>
-  description = description.replaceAll(RegExp(r'<\/?p>|<\/?h1>|<\/?h2>|<\/?h3>|<\/?h4>|<\/?h5>|<\/?h6>|<\/?strong>|<img.*?>'), '');
+  // Remplacer toutes les balises &quot; par un "
+  description = description.replaceAll('&quot;', '"');
+
+  // Remplacer toutes les balises <li>; par un tiret
+  description = description.replaceAll('<li>', '-');
+  description = description.replaceAll('</li>', '\n');
+
+  // Supprimer les balises <p>, <h1>, <h2> ... et les balises <img>, <strong>, <ul>, <ol>, <i>, <a>
+  description = description.replaceAll(RegExp(r'<\/?p>|<\/?h1>|<\/?h2>|<\/?h3>|<\/?h4>|<\/?h5>|<\/?i>|<\/?h6>|<\/?ol>|<\/?ul>|<ul.*?>|<\/?strong>|<img.*?>|<a.*?>|<\/?a>'), '');
   return description;
 }
 
@@ -65,11 +108,13 @@ class InfoJeu extends StatefulWidget {
 
 class _InfoJeuState extends State<InfoJeu> {
   late Future<Map<String, dynamic>> _gameDetailsFuture;
+  late Future<List<Map<String, dynamic>>> _gameCommentaires;
 
   @override
   void initState() {
     super.initState();
     _gameDetailsFuture = fetchGameDetails(widget.gameId);
+    _gameCommentaires = fetchGameReviews(widget.gameId);
   }
 
 
@@ -77,41 +122,157 @@ class _InfoJeuState extends State<InfoJeu> {
   @override
 Widget build(BuildContext context) {
   return Scaffold(
-    //A modifier par la suite
     appBar: AppBar(
-      title: Text('Informations du jeu'),
+      backgroundColor: Color(0xFF1A2025),
+      leading: IconButton(
+        icon: SvgPicture.asset(
+          'assets/svg/back.svg',
+          color: Colors.white,
+        ),
+        onPressed: () {
+          Navigator.pushReplacementNamed(context, '/home');
+        },
+      ),
+      title: Row(
+        children: [
+          Text(
+            "Détails du jeu",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20.0,
+            ),
+          ),
+          SizedBox(width: 8.0),
+        ],
+      ),
     ),
-    body: FutureBuilder<Map<String, dynamic>>(
-      future: _gameDetailsFuture,
+
+   backgroundColor: Color(0xFF1A2025),
+   body: FutureBuilder<Map<String, dynamic>>(
+      future: _gameDetailsFuture, 
       builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
-        //Si ya de la data
         if (snapshot.hasData) {
           final gameData = snapshot.data!;
-          //On affiche nos infos de jeu
-          return ListView(
-            children: [
-              //Affichage (A modifier)
-              Image.network(gameData['imagePrincipale']),
-              Text(gameData['titre'], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('editeur: ${gameData['editeur']}'),
-              Text(gameData['description']),
-              if (gameData['imageSecondaire'] != null) ...[
-                Text('Capture d\'écran:'),
-                Image.network(gameData['imageSecondaire']),
+          return SingleChildScrollView(
+            child: Stack(
+              children: [
+                SizedBox(
+                  height: 400,
+                  child: Image.network(gameData['imageSecondaire'], fit: BoxFit.cover),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 325.0),
+                  child: SizedBox(
+                    height: 150,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Card(
+                        color: Color(0xFF293136),
+                        child: Stack(
+                          children: [
+                            Opacity(
+                              opacity: 0.15,
+                              child: Image.network(gameData['imageSecondaire'], fit: BoxFit.cover),
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 100,
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Image.network(gameData['imagePrincipale'], fit: BoxFit.cover),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(gameData['titre'], 
+                                      style: TextStyle(
+                                        fontSize: 18,  
+                                        color: Colors.white)),
+                                      SizedBox(height: 8),
+                                      Text('${gameData['editeur']}', 
+                                      style: TextStyle(
+                                        fontSize: 14, 
+                                        color: Colors.white)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 500, 16, 0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Code pour afficher la description
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: Color(0xff626af6),
+                              ),
+                              child: Text(
+                                'Description',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            flex: 4,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Code pour afficher les avis
+                              },
+                              style: ElevatedButton.styleFrom(
+                                primary: Color(0xff626af6),
+                              ),
+                              child: Text(
+                                'Avis',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0),
+                        child: Text(
+                          gameData['description'],
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              //Bouton pour sortir et revenir au menu home
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
-                },
-                child: Text('retour en arrière'),
-              ),
-            ],
+            ),
           );
         } else if (snapshot.hasError) {
           return Center(child: Text('${snapshot.error}'));
         } else {
-          //Si ca prends du temps à charger on affiche un progress indicator
           return Center(child: CircularProgressIndicator());
         }
       },
