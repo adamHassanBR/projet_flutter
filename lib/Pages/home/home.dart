@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../detail_jeu/detail_jeu.dart';
+import '../recherche/searching.dart';
 
 //permet de venir récupérer les IDs du top 100 des jeux sur Steam et les renvoient sous forme de tableau de int
 Future<List<int>> fetchGameIds() async {
@@ -171,9 +172,10 @@ Widget build(BuildContext context) {
 }
 
 
-
-//Methode construction de la barre de recherche 
+//Widget pour la recherche 
 Widget _buildSearchBar() {
+  TextEditingController searchController = TextEditingController();
+  //On renvoie une APP bar
   return AppBar(
     title: Padding(
       padding: const EdgeInsets.all(8.0),
@@ -182,16 +184,21 @@ Widget _buildSearchBar() {
           color: Color(0xFF1e262c),
           borderRadius: BorderRadius.circular(25),
         ),
+        //On affiche en Row
         child: Row(
           children: [
             Expanded(
-              
+              //On crée un textfield pour recupérer notre texte
               child: TextField(
+                //on veut que ce soit une bar de recherche, et qu'on puisse recuprer sa valeur par la suite pour l'envoyer en requête API
+                controller: searchController,
                 style: const TextStyle(
                   color: Colors.white,
                 ),
+                //Decoration pour le style
                 decoration: InputDecoration(
                   fillColor: Color(0xFF1e262c),
+                  //Texte de base 
                   hintText: "Rechercher un jeu",
                   hintStyle: TextStyle(color: Colors.white),
                   border: InputBorder.none,
@@ -200,10 +207,27 @@ Widget _buildSearchBar() {
                 ),
               ),
             ),
+            //On ajoute un widget Padding pour le bouton (loupe)
             Padding(
-              //la loupe 
               padding: const EdgeInsets.only(right: 8.0),
-              child: Icon(Icons.search, color: Color(0xFF626AF6)),
+              //Quand il se passe quelque chose  
+              child: GestureDetector(
+                //Quand on clique dessus 
+                onTap: () {
+                  //On recupère le texte qui a été tapé par l'utilisateur
+                  String searchQuery = searchController.text;
+                  //On va ouvrir une nouvelle fenêtre 
+                  Navigator.push(
+                    context,
+                    //Et on appelle la route de la page Recherche
+                    MaterialPageRoute(
+                      builder: (_) => SearchPage(searchQuery),
+                    ),
+                  );
+                },
+                //Couleur du bouton de la loupe 
+                child: Icon(Icons.search, color: Color(0xFF626AF6)),
+              ),
             ),
           ],
         ),
@@ -213,6 +237,7 @@ Widget _buildSearchBar() {
     elevation: 0.0,
   );
 }
+
 
 
 
@@ -319,85 +344,96 @@ Widget _buildBackgroundImage() {
 
 
 
-//Methode de construction de la liste des Jeux. 
-FutureBuilder<List<Game>> _buildGamesList(){
-  return FutureBuilder<List<Game>>(
-      future: _futureGames,
-      builder: (context, snapshot) {
-        //Si notre snapshot à de l'information concernant le jeu
-        if (snapshot.hasData) {
-          final games = snapshot.data!;
-          return ListView.builder(
-            itemCount: games.length +1,
-            itemBuilder: (context, index) {
-              //Si on est le premier Indeex (Va afficher l'image principale et le texte)
-              if (index == 0) {
-                //on renvoie un conteneur
-                return Container(
-                  child: Column(
-                    children: [
-                      //Pour afficher notre Jeu principal
-                      Padding(
-                        padding: EdgeInsets.only(top: 15, bottom: 30.0),
-                        child: _buildBackgroundImage(),
-                      ),
-                      //Pour afficher le texte des Meilleures ventes
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          //Padding de droite et gauche
-                          padding: EdgeInsets.symmetric(horizontal: 13.0),
-                          child: Padding(
-                            //Padding avec les cartes
-                            padding: EdgeInsets.only(bottom: 10), // ajouter du padding après le texte
-                            child: Text(
-                              "Les meilleures ventes",
-                              style: TextStyle(fontSize: 16, color: Colors.white, decoration : TextDecoration.underline),
+  //Methode de construction de la liste des Jeux. 
+  FutureBuilder<List<Game>> _buildGamesList(){
+      return FutureBuilder<List<Game>>(
+          future: _futureGames,
+          builder: (context, snapshot) {
+            //Si notre snapshot à de l'information concernant le jeu
+            if (snapshot.hasData) {
+              final games = snapshot.data!;
+              return ListView.builder(
+                itemCount: games.length +1,
+                itemBuilder: (context, index) {
+                  //Si on est le premier Indeex (Va afficher l'image principale et le texte)
+                  if (index == 0) {
+                    //on renvoie un conteneur
+                    return Container(
+                      child: Column(
+                        children: [
+                          //Pour afficher notre Jeu principal
+                          Padding(
+                            padding: EdgeInsets.only(top: 15, bottom: 30.0),
+                            child: _buildBackgroundImage(),
+                          ),
+                          //Pour afficher le texte des Meilleures ventes
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              //Padding de droite et gauche
+                              padding: EdgeInsets.symmetric(horizontal: 13.0),
+                              child: Padding(
+                                //Padding avec les cartes
+                                padding: EdgeInsets.only(bottom: 10), // ajouter du padding après le texte
+                                child: Text(
+                                  "Les meilleures ventes",
+                                  style: TextStyle(fontSize: 16, color: Colors.white, decoration : TextDecoration.underline),
+                                ),
+                              ),
                             ),
                           ),
+                        ],
+                      ),
+                    );
+                  }else {
+                  final game = games[index -1];
+                  //On vient créer une carte pour notre jeu
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5), // On ajoute un bord arrondi
+                    ),
+                    // On ajoute une marge autour de la carte
+                    margin: EdgeInsets.symmetric(vertical: 7, horizontal: 13), 
+                    child: Container(
+                      height: 115, // On ajoute une hateur personnalisée
+                      decoration: BoxDecoration(
+                        color: Color(0xFF212B33), // On ajoute la couleur de fond des ListTitle
+                        borderRadius: BorderRadius.circular(5), // On ajoute un bord arrondi au container
+                        image: DecorationImage(
+                          //On vient mettre en fond de notre carte l'image tersiaire du jeu
+                          image: NetworkImage(game.imageTersiaire),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.85), BlendMode.srcOver), // Opacité de 85%
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }else {
-              final game = games[index -1];
-              //On vient créer une carte pour notre jeu
-              return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5), // Ajouter un bord arrondi
-                ),
-                margin: EdgeInsets.symmetric(vertical: 7, horizontal: 13), // Ajouter une marge autour de la carte
-                child: Container(
-                  height: 115, // Ajouter une hauteur personnalisée
-                  decoration: BoxDecoration(
-                    color: Color(0xFF212B33), // Ajouter la couleur de fond des ListTitle
-                    borderRadius: BorderRadius.circular(5), // Ajouter un bord arrondi au container
-                  ),
-                  child: Row(
-                    children: [
-                      // On affiche l'image à gauche
-                      Expanded(
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: Image.network(
-                            game.imageUrl,
-                            fit: BoxFit.cover,
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.0 ,vertical: 12),
+                            child : Expanded(
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: Image.network(
+                                game.imageUrl,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      // Puis les infos à droite
-                      Expanded(
-                        flex: 2,
-                        child: Padding(
-                          padding: EdgeInsets.all(17),
-                          child: Column(
-                            //permet d'aligner en horizontal et en vertical
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // On réduit la taille du titre à 16
-                              Text(game.name, style: TextStyle(fontSize: 15, color: Colors.white,)),
+                          ),
+                          // On affiche l'image à gauche
+                          
+                          // Puis les infos à droite
+                          Expanded(
+                            flex: 2,
+                            child: Padding(
+                              padding: EdgeInsets.all(17),
+                              child: Column(
+                                //permet d'aligner en horizontal et en vertical
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // On réduit la taille du titre à 16
+                                  Text(game.name, style: TextStyle(fontSize: 15, color: Colors.white,)),
                               SizedBox(height: 2),
                               // On réduit la taille du sous-titre à 13
                               Text(game.publisher.first, style: TextStyle(fontSize: 13, color: Colors.white,)),
