@@ -4,6 +4,7 @@ import 'package:projet_flutter/Pages/inscription/SignUpPage.dart';
 import 'package:projet_flutter/Pages/detail_jeu/detail_jeu.dart';
 import 'package:projet_flutter/Pages/home/home.dart'; 
 import 'package:firebase_core/firebase_core.dart';
+import 'Pages/recherche/searching.dart';
 import 'firebase_options.dart';
 
 
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
       //On initialise nos routes
       routes: {
         '/connexion': (context) => LoginPage(),
+        '/recherche' : (context) => SearchPage(''),
         '/home': (context) => HomePage(),
         '/inscription': (context) => SignUpPage(),
         '/detail_jeu': (context) {

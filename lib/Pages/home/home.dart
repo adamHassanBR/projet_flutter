@@ -176,65 +176,69 @@ Widget build(BuildContext context) {
 Widget _buildSearchBar() {
   TextEditingController searchController = TextEditingController();
   //On renvoie une APP bar
-  return AppBar(
-    title: Padding(
-      padding: const EdgeInsets.all(8.0),
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+    child : SizedBox(
+      height: 50,
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF1e262c),
-          borderRadius: BorderRadius.circular(25),
-        ),
-        //On affiche en Row
-        child: Row(
-          children: [
-            Expanded(
-              //On crée un textfield pour recupérer notre texte
-              child: TextField(
-                //on veut que ce soit une bar de recherche, et qu'on puisse recuprer sa valeur par la suite pour l'envoyer en requête API
-                controller: searchController,
-                style: const TextStyle(
-                  color: Colors.white,
-                ),
-                //Decoration pour le style
-                decoration: InputDecoration(
-                  fillColor: Color(0xFF1e262c),
-                  //Texte de base 
-                  hintText: "Rechercher un jeu",
-                  hintStyle: TextStyle(color: Colors.white),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                      vertical: 15.0, horizontal: 10.0),
-                ),
-              ),
+              color: Color(0xFF1e262c),
             ),
-            //On ajoute un widget Padding pour le bouton (loupe)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              //Quand il se passe quelque chose  
-              child: GestureDetector(
-                //Quand on clique dessus 
-                onTap: () {
-                  //On recupère le texte qui a été tapé par l'utilisateur
-                  String searchQuery = searchController.text;
-                  //On va ouvrir une nouvelle fenêtre 
-                  Navigator.push(
-                    context,
-                    //Et on appelle la route de la page Recherche
-                    MaterialPageRoute(
-                      builder: (_) => SearchPage(searchQuery),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Color(0xFF1e262c),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            //On affiche en Row
+            child: Row(
+              children: [
+                Expanded(
+                  //On crée un textfield pour recupérer notre texte
+                  child: TextField(
+                    //on veut que ce soit une bar de recherche, et qu'on puisse recuprer sa valeur par la suite pour l'envoyer en requête API
+                    controller: searchController,
+                    style: const TextStyle(
+                      color: Colors.white,
                     ),
-                  );
-                },
-                //Couleur du bouton de la loupe 
-                child: Icon(Icons.search, color: Color(0xFF626AF6)),
-              ),
+                    //Decoration pour le style
+                    decoration: InputDecoration(
+                      fillColor: Color(0xFF1e262c),
+                      //Texte de base 
+                      hintText: "Rechercher un jeu",
+                      hintStyle: TextStyle(color: Colors.white),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 15.0, horizontal: 10.0),
+                    ),
+                  ),
+                ),
+                //On ajoute un widget Padding pour le bouton (loupe)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  //Quand il se passe quelque chose  
+                  child: GestureDetector(
+                    //Quand on clique dessus 
+                    onTap: () {
+                      //On recupère le texte qui a été tapé par l'utilisateur
+                      String searchQuery = searchController.text;
+                      //On va ouvrir une nouvelle fenêtre 
+                      Navigator.push(
+                        context,
+                        //Et on appelle la route de la page Recherche
+                        MaterialPageRoute(
+                          builder: (_) => SearchPage(searchQuery,),
+                        ),
+                      );
+                    },
+                    //Couleur du bouton de la loupe 
+                    child: Icon(Icons.search, color: Color(0xFF626AF6)),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
       ),
     ),
-    backgroundColor: Color(0xFF1e262c),
-    elevation: 0.0,
   );
 }
 
