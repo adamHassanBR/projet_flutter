@@ -65,6 +65,7 @@ flutter:
   
   assets:
     - assets/svg/
+    - assets/img/
   
   fonts:
     - family: GoogleSans

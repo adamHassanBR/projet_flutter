@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../detail_jeu/detail_jeu.dart';
+
 //permet de venir récupérer les IDs du top 100 des jeux sur Steam et les renvoient sous forme de tableau de int
 Future<List<int>> fetchGameIds() async {
   //Requête API 
@@ -25,8 +27,9 @@ class Game {
   final String imageUrl;
   final List<dynamic> publisher;
   final String price;
+  final String imageTersiaire;
 
-  Game({required this.id, required this.name, required this.publisher, required this.price,required this.imageUrl});
+  Game({required this.id, required this.name, required this.publisher, required this.price,required this.imageUrl, required this.imageTersiaire});
 }
 
 //Crée notre fetch qui va aller chercher les informations d'un jeu en fonction de son ID (Récupérée avant)
@@ -48,7 +51,10 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         final String imageUrl = jsonResponse['header_image'];
         //On récupère le créateur 
         final List<dynamic> publisher = jsonResponse['publishers'];
-        
+
+        final List<dynamic> screenshotsList = jsonResponse['screenshots'];
+        final String imageTersiaire = screenshotsList.isNotEmpty ? screenshotsList.last['path_thumbnail'] : '';
+
         //On va venir se focaliser sur la partie 'Price' de 'Data' pour pouvoir récupérer le jeu
         final Map<String, dynamic>? jsonResponse2 = json.decode(response.body)[id.toString()]['data']['price_overview'];
         
@@ -71,7 +77,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         }
 
         //On envoie tout dans notre constructeur
-        final Game game = Game(id: id, name: name, publisher: publisher, price : price,imageUrl: imageUrl);
+        final Game game = Game(id: id, name: name, publisher: publisher, price : price,imageUrl: imageUrl, imageTersiaire : imageTersiaire);
         games.add(game);
       }
     } else {
@@ -123,6 +129,9 @@ Widget build(BuildContext context) {
             child: Text(
               'Accueil',
               textAlign: TextAlign.left,
+              style : TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           //Puis on va afficher les SVG de l'etoile et du like
@@ -265,8 +274,10 @@ Widget _buildBackgroundImage() {
                   ElevatedButton(
                     //Quand il est pressé on fait un évenement
                     onPressed: () {
-                      //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (en String)
-                      Navigator.pushReplacementNamed(context, '/detail_jeu', arguments: "812140");
+                      //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (en String) et on veut pouvoir revenir sur notre page
+                      Navigator.push(
+                        context, 
+                        PageRouteBuilder(pageBuilder: (_, __, ___) => InfoJeu(gameId: '812140',),),);
                     },
                     child: Text(
                       "En savoir plus",
@@ -406,8 +417,10 @@ FutureBuilder<List<Game>> _buildGamesList(){
                       GestureDetector(
                         //Dès qu'on appuie sur le bouton 
                         onTap: () {
-                          //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (et on le converti en String)
-                          Navigator.pushReplacementNamed(context, '/detail_jeu', arguments: game.id.toString());
+                          //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (et on le converti en String) et on veut pouvoir revenir sur notre page
+                          Navigator.push(
+                          context, 
+                          PageRouteBuilder(pageBuilder: (_, __, ___) => InfoJeu(gameId: game.id.toString(),),),);
                         },
                         //Notre bouton est dans un Container 
                         child: Container(
