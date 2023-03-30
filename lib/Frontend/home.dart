@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:projet_flutter/Frontend/whishlist.dart';
 
-import '../detail_jeu/detail_jeu.dart';
-import '../recherche/searching.dart';
+import 'detail_jeu.dart';
+import 'likes.dart';
+import 'searching.dart';
 
 //permet de venir récupérer les IDs du top 100 des jeux sur Steam et les renvoient sous forme de tableau de int
 Future<List<int>> fetchGameIds() async {
@@ -136,17 +138,37 @@ Widget build(BuildContext context) {
             ),
           ),
           //Puis on va afficher les SVG de l'etoile et du like
-          SvgPicture.asset(
-            'assets/svg/like.svg',
-            height: 20,
-            width: 20,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LikelistPage(),
+                ),
+              );
+            },
+            child: SvgPicture.asset(
+              'assets/svg/like.svg',
+              height: 20,
+              width: 20,
+            ),
           ),
           //On ajoute un espace entre les 2 Svg 
           SizedBox(width: 40),
-          SvgPicture.asset(
-            'assets/svg/whishlist.svg',
-            height: 20,
-            width: 20,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WishlistPage(),
+                ),
+              );
+            },
+            child: SvgPicture.asset(
+              'assets/svg/whishlist.svg',
+              height: 20,
+              width: 20,
+            ),
           ),
         ],
       ),

@@ -47,6 +47,22 @@ Future<Map<String, dynamic>> fetchGameDetails(String gameId) async {
   }
 }
 
+//Permet de Fetch le username des utilisateurs Steams en fonction de leur ID
+Future<String> fetchSteamUsername(String steamId) async {
+  //Clé API Steam de Thibault Gautier
+  final apiKey = "345E950B428C0A29F7ED5A936D461277";
+  //On fetch à cet url
+  final url =
+      "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=$apiKey&format=json&steamids=$steamId";
+  final response = await http.get(Uri.parse(url));
+  if (response.statusCode == 200) {
+    final jsonResponse = json.decode(response.body);
+    final username = jsonResponse['response']['players'][0]['personaname'];
+    return username;
+  } else {
+    throw Exception('Failed to fetch steam username.');
+  }
+}
 
 //On va venir fetch nos commentaire via l'API
 Future<List<Map<String, dynamic>>> fetchGameReviews(String gameId) async {
@@ -517,14 +533,37 @@ class ReviewsListWidget extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text(
-                          //notre ID steam (Voir si on peut pas chopper les blaz ?)
-                          review['idSteam'],
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            decoration: TextDecoration.underline,
-                          ),
+                        FutureBuilder<String>(
+                          //Permet d'aller récupérer le Blaz d'un utilisateur Steam en fonction de son ID 
+                          future: fetchSteamUsername(review['idSteam']),
+                          builder: (context, snapshot) {
+                            //Si on est connecté 
+                            if (snapshot.connectionState == ConnectionState.done) {
+                              if (snapshot.hasData) {
+                                return Text(
+                                  //On renvoie du texte en fonctiond e ce que le fetch nous renvoie 
+                                  snapshot.data!,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                );
+                                //SI il y a une erreur 
+                              } else if (snapshot.hasError) {
+                                return Text(
+                                  "Erreur de chargement de l'utilisateur",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                );
+                              }
+                            }
+                            // On affiche un indicateur de chargement en attendant que la fonction fetchSteamUsername soit terminée
+                            return CircularProgressIndicator();
+                          },
                         ),
                         //Affichage de nos etoiles. Si bien 5 etoiles, si pas bien 1 etoile. 
                         Image.asset(

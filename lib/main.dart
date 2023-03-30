@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:projet_flutter/Pages/connexion/LoginPage.dart';
-import 'package:projet_flutter/Pages/inscription/SignUpPage.dart';
-import 'package:projet_flutter/Pages/detail_jeu/detail_jeu.dart';
-import 'package:projet_flutter/Pages/home/home.dart'; 
+import 'package:projet_flutter/Frontend/connexion.dart';
+import 'package:projet_flutter/Frontend/signup.dart';
+import 'package:projet_flutter/Frontend/detail_jeu.dart';
+import 'package:projet_flutter/Frontend/home.dart'; 
 import 'package:firebase_core/firebase_core.dart';
-import 'Pages/recherche/searching.dart';
+import 'Frontend/likes.dart';
+import 'Frontend/searching.dart';
+import 'Frontend/whishlist.dart';
 import 'firebase_options.dart';
 
 
@@ -31,10 +33,12 @@ class MyApp extends StatelessWidget {
       initialRoute: '/home',
       //On initialise nos routes
       routes: {
-        '/connexion': (context) => LoginPage(),
+        '/connexion': (context) => Connexion(),
         '/recherche' : (context) => SearchPage(''),
         '/home': (context) => HomePage(),
-        '/inscription': (context) => SignUpPage(),
+        '/inscription': (context) => Inscription(),
+        '/whishlist' : (context) => WishlistPage(),
+        'likes' : (context) => LikelistPage(),
         '/detail_jeu': (context) {
           final String gameId = ModalRoute.of(context)!.settings.arguments as String;
           return InfoJeu(gameId: gameId);

@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../detail_jeu/detail_jeu.dart';
+import 'detail_jeu.dart';
 
 //Notre classe de Search (Principale)
 class SearchPage extends StatefulWidget {
