@@ -269,16 +269,30 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: Row(
         children: [
+          Expanded(
           //affichage de texte
-          Text(
-            "Détails du jeu",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 20.0,
+            child: Text(
+              "Détails du jeu",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20.0,
+              ),
             ),
           ),
-          SizedBox(width: 8.0),
+          //Puis on va afficher les SVG de l'etoile et du like
+          SvgPicture.asset(
+            'assets/svg/like.svg',
+            height: 20,
+            width: 20,
+          ),
+          //On ajoute un espace entre les 2 Svg 
+          SizedBox(width: 40),
+          SvgPicture.asset(
+            'assets/svg/whishlist.svg',
+            height: 20,
+            width: 20,
+          ),
         ],
       ),
     );
