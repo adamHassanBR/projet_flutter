@@ -13,12 +13,9 @@ import 'firebase_options.dart';
 void main() async 
 {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,);
-  runApp(const MyApp());
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
-
-
-
 
 ///***** widget static ******///
 class MyApp extends StatelessWidget {
@@ -30,7 +27,7 @@ class MyApp extends StatelessWidget {
       title: "game ranking",
       debugShowCheckedModeBanner: false,
       //On appelle le menu connexion en premier
-      initialRoute: '/home',
+      initialRoute: '/connexion',
       //On initialise nos routes
       routes: {
         '/connexion': (context) => Connexion(),

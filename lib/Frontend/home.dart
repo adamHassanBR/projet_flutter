@@ -49,12 +49,17 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
       //Pour s'assurer que nos informations ne sont pas null (Au cas ou un jeu ait été retiré ou autre)
       if (jsonResponse != null) {
         //On récupère le nom
-        final String name = jsonResponse['name'];
+        String name = jsonResponse['name'];
+        if(name.length > 30) {
+          name = name.substring(0, name.lastIndexOf(' '));
+        }
         //On récupère l'image
         final String imageUrl = jsonResponse['header_image'];
         //On récupère le créateur 
         final List<dynamic> publisher = jsonResponse['publishers'];
-
+        if(publisher.first.length > 20) {
+          publisher.first = publisher.first.substring(0, publisher.first.lastIndexOf(' '));
+        }
         final List<dynamic> screenshotsList = jsonResponse['screenshots'];
         final String imageTersiaire = screenshotsList.isNotEmpty ? screenshotsList.last['path_thumbnail'] : '';
 
@@ -84,7 +89,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         games.add(game);
       }
     } else {
-      //Si ca ne fonctionne pas
+      //Si ca ne fonctionne pas /!\ PARFOIS IL NARRIVE PAS A FETCH, IL FAUT JUSTE RELOAD l'APPLICATION
       throw Exception('Echec du Fetch des informations des Jeux');
     }
   }

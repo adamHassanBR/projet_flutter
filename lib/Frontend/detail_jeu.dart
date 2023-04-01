@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -58,6 +60,9 @@ Future<String> fetchSteamUsername(String steamId) async {
   if (response.statusCode == 200) {
     final jsonResponse = json.decode(response.body);
     final username = jsonResponse['response']['players'][0]['personaname'];
+    // if(username.length > 25) {
+    //       username = username.substring(0, username.lastIndexOf(' '));
+    // }
     return username;
   } else {
     throw Exception('Failed to fetch steam username.');
@@ -163,7 +168,7 @@ class _InfoJeuState extends State<InfoJeu> {
 Widget build(BuildContext context) {
   return Scaffold(
     //Appelle le builder de la classe AppBar Widget 
-    appBar: AppBarWidget(),
+    appBar: AppBarWidget(gameId: widget.gameId),
     backgroundColor: Color(0xFF1A2025),
     // On a un body future car le fetching des infos du jeu est un future
     body : FutureBuilder<Map<String, dynamic>>(
@@ -261,32 +266,55 @@ Widget build(BuildContext context) {
 
 
 
-// Widget pour la barre d'affichage principale
-class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
-  @override
-  //On size en fonction de kToolbarHeight
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
+  final String gameId;
+  DatabaseReference? _likesRef;
 
-  //Le builder
+  AppBarWidget({required this.gameId});
+
+  @override
+  _AppBarWidgetState createState() => _AppBarWidgetState();
+
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+}
+
+class _AppBarWidgetState extends State<AppBarWidget> {
+  bool _isLiked = false;
+
+  @override
+  void initState() {
+
+    super.initState();
+    widget._likesRef = FirebaseDatabase.instance
+        .reference()
+        .child('liked_games')
+        .child(FirebaseAuth.instance.currentUser!.uid)
+        .child(widget.gameId);
+    widget._likesRef!.once().then((snapshot) {
+      if (snapshot.snapshot.value != null) {
+        setState(() {
+          _isLiked = true;
+        });
+      }
+    });
+    print('UID de l\'utilisateur connecté: ${FirebaseAuth.instance.currentUser!.uid}, Jeu ID : ${widget.gameId}');
+
+  }
+
   @override
   Widget build(BuildContext context) {
-    //On renvoie une appBar
     return AppBar(
       backgroundColor: Color(0xFF1A2025),
-      // Permet d'afficher le bouton de retour 
       leading: IconButton(
         icon: SvgPicture.asset(
-          //on va load notre SVG
           'assets/svg/back.svg',
           color: Colors.white,
         ),
-        //Quand on appuie dessus on revient au menu Home
         onPressed: () => Navigator.pop(context),
       ),
       title: Row(
         children: [
           Expanded(
-          //affichage de texte
             child: Text(
               "Détails du jeu",
               style: TextStyle(
@@ -296,13 +324,34 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          //Puis on va afficher les SVG de l'etoile et du like
-          SvgPicture.asset(
-            'assets/svg/like.svg',
-            height: 20,
-            width: 20,
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isLiked = !_isLiked;
+                if (_isLiked) {
+                  print('Bouton like appuyé');
+                  // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
+                  widget._likesRef!.set(widget.gameId).then((_) {
+                    print('Ajout du like pour le jeu ${widget.gameId}');
+                  }).catchError((error) {
+                    print('Erreur lors de l\'ajout du like pour le jeu ${widget.gameId}: $error');
+                  });
+                } else {
+                  // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
+                  widget._likesRef!.remove().then((_) {
+                    print('Suppression du like pour le jeu ${widget.gameId}');
+                  }).catchError((error) {
+                    print('Erreur lors de la suppression du like pour le jeu ${widget.gameId}: $error');
+                  });
+                }
+              });
+            },
+            icon: SvgPicture.asset(
+              _isLiked ? 'assets/svg/like_full.svg' : 'assets/svg/like.svg',
+              height: 20,
+              width: 20,
+            ),
           ),
-          //On ajoute un espace entre les 2 Svg 
           SizedBox(width: 40),
           SvgPicture.asset(
             'assets/svg/whishlist.svg',
