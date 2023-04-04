@@ -269,6 +269,8 @@ Widget build(BuildContext context) {
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final String gameId;
   DatabaseReference? _likesRef;
+  DatabaseReference? _wishlistRef;
+
 
   AppBarWidget({required this.gameId});
 
@@ -280,6 +282,7 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
 
 class _AppBarWidgetState extends State<AppBarWidget> {
   bool _isLiked = false;
+  bool _isInWishlist = false;
 
   @override
   void initState() {
@@ -290,16 +293,30 @@ class _AppBarWidgetState extends State<AppBarWidget> {
         .child('liked_games')
         .child(FirebaseAuth.instance.currentUser!.uid)
         .child(widget.gameId);
+
+
+    widget._wishlistRef = FirebaseDatabase.instance
+        .reference()
+        .child('wish_games')
+        .child(FirebaseAuth.instance.currentUser!.uid)
+        .child(widget.gameId);
+
+
     widget._likesRef!.once().then((snapshot) {
       if (snapshot.snapshot.value != null) {
         setState(() {
           _isLiked = true;
         });
       }
-    });
-    print('UID de l\'utilisateur connecté: ${FirebaseAuth.instance.currentUser!.uid}, Jeu ID : ${widget.gameId}');
 
-  }
+    widget._wishlistRef!.once().then((snapshot) {
+      if (snapshot.snapshot.value != null) {
+        setState(() {
+          _isInWishlist = true;
+        });
+      }
+    });
+  });}
 
   @override
   Widget build(BuildContext context) {
@@ -352,11 +369,35 @@ class _AppBarWidgetState extends State<AppBarWidget> {
               width: 20,
             ),
           ),
+
           SizedBox(width: 40),
-          SvgPicture.asset(
-            'assets/svg/whishlist.svg',
-            height: 20,
-            width: 20,
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isInWishlist = !_isInWishlist;
+                if (_isInWishlist) {
+                  print('Bouton wish appuyé');
+                  // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
+                  widget._wishlistRef!.set(widget.gameId).then((_) {
+                    print('Ajout du wish pour le jeu ${widget.gameId}');
+                  }).catchError((error) {
+                    print('Erreur lors de l\'ajout du wish pour le jeu ${widget.gameId}: $error');
+                  });
+                } else {
+                  // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
+                  widget._wishlistRef!.remove().then((_) {
+                    print('Suppression du wish pour le jeu ${widget.gameId}');
+                  }).catchError((error) {
+                    print('Erreur lors de la suppression du wish pour le jeu ${widget.gameId}: $error');
+                  });
+                }
+              });
+            },
+            icon: SvgPicture.asset(
+              _isInWishlist ? 'assets/svg/whishlist_full.svg' : 'assets/svg/whishlist.svg',
+              height: 20,
+              width: 20,
+            ),
           ),
         ],
       ),
