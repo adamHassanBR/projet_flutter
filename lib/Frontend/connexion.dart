@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 
-class Connexion extends StatefulWidget 
-{
+class Connexion extends StatefulWidget {
   const Connexion({super.key});
 
   @override
@@ -11,29 +11,28 @@ class Connexion extends StatefulWidget
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<Connexion> 
-{
+class _LoginPageState extends State<Connexion> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
 
-  String _errorMessage = '';
+  String? _emailError;
+  String? _passwordError;
+  
 
   //Fonction pour se connecter 
-  Future<void> _signIn() async 
-  {
-    try 
-    {
+  Future<void> _signIn() async {
+    try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
       //Si on a rien rempli
-      if (email.isEmpty || password.isEmpty) 
-      {
-        setState(() 
-        {
-          _errorMessage = 'Veuillez remplir tous les champs';
+      if (email.isEmpty || password.isEmpty) {
+        setState(() {
+          _emailError = email.isEmpty ? 'Veuillez entrer votre email' : null;
+          _passwordError =
+              password.isEmpty ? 'Veuillez entrer votre mot de passe' : null;
         });
         return;
       }
@@ -45,23 +44,18 @@ class _LoginPageState extends State<Connexion>
       Navigator.pushReplacementNamed(context, '/home');
     } 
     //On catch les erreurs. 
-    on FirebaseAuthException catch (e) 
-    {
-      if (e.code == 'user-not-found') 
-      {
-        setState(() 
-        {
-          _errorMessage = 'Aucun utilisateur trouvé pour cet email';
+    on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        setState(() {
+          _emailError = 'Aucun utilisateur trouvé pour cet email';
         });
       } else if (e.code == 'wrong-password') {
-        setState(() 
-        {
-          _errorMessage = 'Mauvais mot de passe';
+        setState(() {
+          _passwordError = 'Mauvais mot de passe';
         });
       } else {
-        setState(() 
-        {
-          _errorMessage = 'Erreur de connexion: ${e.message}';
+        setState(() {
+          _emailError = 'Erreur de connexion: ${e.message}';
         });
       }
     }
@@ -146,85 +140,78 @@ class _LoginPageState extends State<Connexion>
 
 
 
-                    //Notre TextField de Connexion
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: "Email",
-                        labelStyle: TextStyle(
-                          fontFamily: 'Google Sans',
-                          color: Colors.white,
-                        ),
-                        filled: true,
-                        fillColor: Color(0xFF1e262c),
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Colors.white,
-                            width: 2.0,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFF1e262c),
-                          ),
-                        ),
-                      ),
-                      style: const TextStyle(
-                        //Couleur du texte tapé par l'utilisateur
+                  // Notre TextField de Connexion
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      labelStyle: const TextStyle(
+                        fontFamily: 'Google Sans',
                         color: Colors.white,
                       ),
-                      //Valider si toutes les conditions sont bien remplies.
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Veuillez entrer votre email';
-                        }
-                        return null;
-                      },
-                ),
-                //Rajoute un espace
-                const SizedBox(height: 16.0),
-
-                //TextField pour le password
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
-                    labelStyle: TextStyle(
-                      fontFamily: 'Google Sans',
+                      filled: true,
+                      fillColor: const Color(0xFF1e262c),
+                      border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                          width: 2.0,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0xFF1e262c),
+                        ),
+                      ),
+                      errorText: _emailError,
+                      errorStyle: const TextStyle(color: Colors.red),
+                      
+                    ),
+                    style: const TextStyle(
+                      // Couleur du texte tapé par l'utilisateur
                       color: Colors.white,
                     ),
-                    filled: true,
-                    fillColor: Color(0xFF1e262c),
-                    border: OutlineInputBorder(),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
+                  ),
+                  // Rajoute un espace
+                  const SizedBox(height: 16.0),
+
+
+                
+                  // TextField pour le mot de passe
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Mot de passe',
+                      labelStyle: const TextStyle(
+                        fontFamily: 'Google Sans',
                         color: Colors.white,
-                        width: 2.0,
                       ),
+                      filled: true,
+                      fillColor: const Color(0xFF1e262c),
+                      border: OutlineInputBorder(),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                          width: 2.0,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0xFF1e262c),
+                        ),
+                      ),
+                      errorText: _passwordError,
+                      errorStyle: const TextStyle(color: Colors.red),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF1e262c),
-                      ),
+                    style: const TextStyle(
+                      // Couleur du texte tapé par l'utilisateur
+                      color: Colors.white,
                     ),
                   ),
-                  style: const TextStyle(
-                    //Couleur du texte tapé par l'utilisateur
-                    color: Colors.white,
-                  ),
-                  //On vérrifie qu'il y a bien un mot de passe.
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Veuillez entrer votre mot de passe';
-                    }
-                    return null;
-                  },
-                ),
-                //Rajoute un espace
-                const SizedBox(height: 100.0),
+                  // Rajoute un espace
+                  const SizedBox(height: 100.0),
 
                 //BOUTON SE CONNECTER
                 ElevatedButton(
@@ -265,21 +252,6 @@ class _LoginPageState extends State<Connexion>
                     ),
                   ),
                 ),
-
-                //Si il y a un message d'erreur
-                if (_errorMessage.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        left: 0.0, right: 0.0, top: 15.0, bottom: 0.0),
-                    child: Text(
-                      _errorMessage,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 16.0,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
