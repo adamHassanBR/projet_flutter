@@ -118,9 +118,24 @@ class _SearchPageState extends State<SearchPage> {
                 );
                 //Sinon quand on a trouvé de la data
               } else if (snapshot.hasData) {
-                final games = snapshot.data;
-                //On appelle le widget de construction des Jeux
-                return _buildGamesList(games!);
+                if(_searchQuery==''){
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
+                    alignment: Alignment.topLeft,
+                    child: const Text(
+                      "Veuillez remplir le champ recherche",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        decoration: TextDecoration.underline,
+                      ),
+                    )
+                  );
+                } else {
+                  final games = snapshot.data;
+                  //On appelle le widget de construction des Jeux
+                  return _buildGamesList(games!);
+                }
               } else {
                 //Si on a pas trouvé de matching avec le texte tapé par l'utilisateur
                 return Center(
@@ -145,7 +160,8 @@ class _SearchPageState extends State<SearchPage> {
             padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
             alignment: Alignment.centerLeft,
             //On indique le nombre de jeux trouvés, et sinon on affiche 0 si il y a rien   
-            child: Text(
+            child: 
+            Text(
               "Nombre de jeux trouvés: ${games.length}",
               style: const TextStyle(
                 fontSize: 16,

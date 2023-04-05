@@ -47,6 +47,9 @@ Widget build(BuildContext context) {
   return Scaffold(
     //Menu supperieur (Accueil)
      appBar: AppBar(
+
+    //permet de supprimer un eventuel bouton retour
+      automaticallyImplyLeading: false,
       //On affiche en ligne 
       title: Row(
         children: [

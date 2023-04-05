@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 
 
 class Inscription extends StatefulWidget {
@@ -14,12 +16,117 @@ class Inscription extends StatefulWidget {
 class _SignUpPageState extends State<Inscription> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  //Permet de voir si on a modifier notre texte pour supprimer notre erreur SVG
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _pseudoController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   final logger = Logger();
   bool isAlreadyExist = false;
 
+  //Boolens pour controler l'etat de notre erreur 
+  bool _passwordError = false;
+  bool _confirmPasswordError = false;
+  bool _pseudoError = false;
+  bool _emailError = false;
+
+
+
+  //Boolean pour controler l'etat de notre affichage de SVG
+  bool _showPasswordErrorIcon = false;
+  bool _showConfirmPasswordErrorIcon = false;
+  bool _showPseudoErrorIcon = false;
+  bool _showEmailErrorIcon = false;
+
+
 
   //Création des Variables String pour stocker les valeurs des TextFields
-  late String _email, _password, _tempPassword;
+  late String _email, _password, _tempPassword='';
+
+// Je voudrais que quand il y a une erreur dans les champs (comme par exemple, "Les mots de passe ne correspondent pas"), dans le TextField tout à droite je voudrai qu'on affiche le SVG "warning.svg", et  
+  @override
+void initState() {
+  super.initState();
+  //Permet de voir dès qu'on a un changement avec un Adlistener
+  _passwordController.addListener(_updatePasswordError);
+  _confirmPasswordController.addListener(_updateConfirmPasswordError);
+  _pseudoController.addListener(_updatePseudoError);
+  _emailController.addListener(_updateEmailError);
+}
+
+@override
+void dispose() {
+  _passwordController.dispose();
+  _confirmPasswordController.dispose();
+  _pseudoController.dispose();
+  _emailController.dispose();
+  super.dispose();
+}
+
+//Pour changer le state de mon controleur d'erreur d'email
+void _updateEmailError() {
+  if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
+    if (!_emailError) {
+      setState(() {
+        _emailError = true;
+      });
+    }
+  } else if (_emailError) {
+    setState(() {
+      _emailError = false;
+    });
+  }
+}
+
+//Pour changer le state de mon controleur de mot de passe
+void _updatePasswordError() {
+  if (_passwordController.text.isEmpty || _passwordController.text.length < 6) {
+    if (!_passwordError) {
+      setState(() {
+        _passwordError = true;
+      });
+    }
+  } else if (_passwordError) {
+    setState(() {
+      _passwordError = false;
+    });
+  }
+}
+
+//Pour changer le state de mon controleur d'erreur de confirmation de mot de passe
+void _updateConfirmPasswordError() {
+  if (_confirmPasswordController.text.isEmpty ||
+      _confirmPasswordController.text != _passwordController.text) {
+    if (!_confirmPasswordError) {
+      setState(() {
+        _confirmPasswordError = true;
+      });
+    }
+  } else if (_confirmPasswordError) {
+    setState(() {
+      _confirmPasswordError = false;
+    });
+  }
+}
+
+//Pour changer le state de mon controleur d'erreur de Pseudo
+void _updatePseudoError() {
+  if (_pseudoController.text.isEmpty) {
+    if (!_pseudoError) {
+      setState(() {
+        _pseudoError = true;
+      });
+    }
+  } else if (_pseudoError) {
+    setState(() {
+      _pseudoError = false;
+    });
+  }
+}
+
+
 
   //Fonction lorsqu'on appuye sur le bouton "S'inscrire"
   void _submit() async {
@@ -33,10 +140,13 @@ class _SignUpPageState extends State<Inscription> {
 
         // Envoi d'un email de vérification à l'utilisateur créé
         await userCredential.user!.sendEmailVerification();
+      
+        //On connecte l'utilisateur
+        await _auth.signInWithEmailAndPassword(email: _email, password: _password);
 
         // Redirection vers la page de connexion
         // ignore: use_build_context_synchronously
-        Navigator.pushReplacementNamed(context, '/connexion');
+        Navigator.pushReplacementNamed(context, '/home');
 
         //Catch des erreurs
       } on FirebaseAuthException catch (e) {
@@ -49,7 +159,15 @@ class _SignUpPageState extends State<Inscription> {
       } catch (e) {
         logger.e(e.toString());
       }
-    }
+    } else {
+    // On Met à jour l'état des icônes d'avertissement si on ne remplis pas les conditions necessaire à leur apparition. 
+    setState(() {
+      _showPseudoErrorIcon = _pseudoController.text.isEmpty;
+      _showEmailErrorIcon = _emailController.text.isEmpty || !_emailController.text.contains('@');
+      _showPasswordErrorIcon = _passwordController.text.isEmpty || _passwordController.text.length < 6;
+      _showConfirmPasswordErrorIcon = _confirmPasswordController.text.isEmpty || _confirmPasswordController.text != _passwordController.text;
+    });
+  }
   }
 
   //Front de l'appli
@@ -111,6 +229,7 @@ class _SignUpPageState extends State<Inscription> {
 
               ///Text Form pour le Nom d'utilisateur
                TextFormField(
+                controller: _pseudoController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration
                 (
@@ -141,19 +260,38 @@ class _SignUpPageState extends State<Inscription> {
                       color: const Color(0xFF1e262c),
                     ),
                   ),
+                  suffixIcon: _showPseudoErrorIcon
+                 ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset('assets/svg/warning.svg', width: 24, height: 24),
+                      ),
+                    )
+                  : null,
                 ),
                 style: const TextStyle
                   (
                     //Couleur du texte tapé par l'utilisateur
                     color: Colors.white,
                   ),
+                validator: (input) {
+                  if (input==null || input.isEmpty){
+                    return "Veuillez renseigner un nom d'utilisateur";
+                  }
+                  return null;
+                },
+                  
               ),
+              
               //On rajoute de l'espace
               const SizedBox(height: 16.0),
 
 
               //TextField pour accueillir l'EMAIL
               TextFormField(
+                controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration
@@ -185,6 +323,16 @@ class _SignUpPageState extends State<Inscription> {
                       color: const Color(0xFF1e262c),
                     ),
                   ),
+                  suffixIcon: _showEmailErrorIcon
+                 ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset('assets/svg/warning.svg', width: 24, height: 24),
+                      ),
+                    )
+                  : null,
                 ),
                 style: const TextStyle
                   (
@@ -192,8 +340,11 @@ class _SignUpPageState extends State<Inscription> {
                     color: Colors.white,
                   ),
                   //On ne créé pas le compte tant que ce n'est pas bon. 
-                validator: (input) {
-                  if (!input!.contains('@')) {
+                 validator: (input) {
+                  if (input==null || input.isEmpty){
+                    return 'Veuillez renseigner une adresse e-mail';
+                  }
+                  else if (!input.contains('@')) {
                     return 'Entrez une adresse email valide';
                   } else if (isAlreadyExist) {
                     isAlreadyExist = false;
@@ -212,6 +363,7 @@ class _SignUpPageState extends State<Inscription> {
 
               //TextField pour le Mot de passe de l'utilisateur
               TextFormField(
+                controller: _passwordController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: "Mot de passe",
@@ -237,6 +389,16 @@ class _SignUpPageState extends State<Inscription> {
                       color: const Color(0xFF1e262c),
                     ),
                   ),
+                 suffixIcon: _showPasswordErrorIcon
+                 ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset('assets/svg/warning.svg', width: 24, height: 24),
+                      ),
+                    )
+                  : null,
                 ),
                 obscureText: true,
                 style: const TextStyle
@@ -267,6 +429,7 @@ class _SignUpPageState extends State<Inscription> {
 
               //TextField pour la vérification du mot de passe de l'utilisateur. 
               TextFormField(
+                controller: _confirmPasswordController,
                 // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: "Confirmez le mot de passe",
@@ -291,6 +454,16 @@ class _SignUpPageState extends State<Inscription> {
                       color: const Color(0xFF1e262c),
                     ),
                   ),
+                  suffixIcon: _showConfirmPasswordErrorIcon
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset('assets/svg/warning.svg', width: 24, height: 24),
+                      ),
+                    )
+                  : null,
                 ),
                 obscureText: true,
                 style: const TextStyle
@@ -300,7 +473,9 @@ class _SignUpPageState extends State<Inscription> {
                   ),
                   //On va vérifier si les deux mots de passes sont les mêmes. Si NON, on bloque la création
                 validator: (input) {
-                  if (input != _tempPassword) {
+                  if (input==null || input.isEmpty) {
+                    return "Veuillez renseigner la confirmation de mot de passe";
+                  } else if (input != _tempPassword ) {
                     return "Les mots de passe ne correspondent pas";
                   }
                   return null;
