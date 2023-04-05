@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
+// ignore: depend_on_referenced_packages
+import 'package:bloc/bloc.dart' show Bloc;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 part 'auth_event.dart';
 
@@ -14,7 +14,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       : _auth = auth,
         super(AuthInitial());
 
-  @override
   Stream<AuthState> mapEventToState(AuthEvent event) async* {
     if (event is LoginEvent) {
       yield AuthLoading();

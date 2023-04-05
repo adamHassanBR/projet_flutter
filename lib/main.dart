@@ -7,14 +7,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'Frontend/likes.dart';
 import 'Frontend/searching.dart';
 import 'Frontend/whishlist.dart';
-import 'firebase_options.dart';
 
 
 void main() async 
 {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 ///***** widget static ******///
@@ -30,12 +29,12 @@ class MyApp extends StatelessWidget {
       initialRoute: '/connexion',
       //On initialise nos routes
       routes: {
-        '/connexion': (context) => Connexion(),
-        '/recherche' : (context) => SearchPage(''),
-        '/home': (context) => HomePage(),
-        '/inscription': (context) => Inscription(),
-        '/whishlist' : (context) => WishlistPage(),
-        'likes' : (context) => LikelistPage(),
+        '/connexion': (context) => const Connexion(),
+        '/recherche' : (context) => const SearchPage(''),
+        '/home': (context) => const HomePage(),
+        '/inscription': (context) => const Inscription(),
+        '/whishlist' : (context) => const WishlistPage(),
+        'likes' : (context) => const LikelistPage(),
         '/detail_jeu': (context) {
           final String gameId = ModalRoute.of(context)!.settings.arguments as String;
           return InfoJeu(gameId: gameId);

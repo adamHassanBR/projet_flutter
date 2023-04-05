@@ -1,111 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:projet_flutter/Frontend/whishlist.dart';
 
 import 'detail_jeu.dart';
 import 'likes.dart';
 import 'searching.dart';
 
-//permet de venir récupérer les IDs du top 100 des jeux sur Steam et les renvoient sous forme de tableau de int
-Future<List<int>> fetchGameIds() async {
-  //Requête API 
-  final response = await http.get(Uri.parse('https://api.steampowered.com/ISteamChartsService/GetMostPlayedGames/v1/'));
-  
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
-    final List<dynamic> ranks = jsonResponse['response']['ranks'];
-    final List<int> ids = ranks.map((rank) => rank['appid'] as int).toList();
-    return ids;
-  } else {
-    throw Exception('Echec du Fetch les Ids des Jeux');
-  }
-}
+// ignore: library_prefixes
+import 'package:projet_flutter/Backend/SteamAPI_fetch.dart' as steamAPI;
+// ignore: library_prefixes
+import 'package:projet_flutter/Backend/Game.dart' as createGame;
 
-//Créé notre classe Game qui va contenir 1 jeu et ses informations. 
-class Game {
-  final int id;
-  final String name;
-  final String imageUrl;
-  final List<dynamic> publisher;
-  final String price;
-  final String imageTersiaire;
-
-  Game({required this.id, required this.name, required this.publisher, required this.price,required this.imageUrl, required this.imageTersiaire});
-}
-
-//Crée notre fetch qui va aller chercher les informations d'un jeu en fonction de son ID (Récupérée avant)
-Future<List<Game>> fetchGames(List<int> gameIds) async {
-  final List<Game> games = [];
-
-  for (int id in gameIds) {
-    //requête API
-    final response = await http.get(Uri.parse('https://store.steampowered.com/api/appdetails?appids=$id'));
-
-    if (response.statusCode == 200) {
-      //On va aller dans la partie 'Data' de notre jeu
-      final Map<String, dynamic>? jsonResponse = json.decode(response.body)[id.toString()]['data'];
-      //Pour s'assurer que nos informations ne sont pas null (Au cas ou un jeu ait été retiré ou autre)
-      if (jsonResponse != null) {
-        //On récupère le nom
-        String name = jsonResponse['name'];
-        if(name.length > 30) {
-          name = name.substring(0, name.lastIndexOf(' '));
-        }
-        //On récupère l'image
-        final String imageUrl = jsonResponse['header_image'];
-        //On récupère le créateur 
-        final List<dynamic> publisher = jsonResponse['publishers'];
-        if(publisher.first.length > 20) {
-          publisher.first = publisher.first.substring(0, publisher.first.lastIndexOf(' '));
-        }
-        final List<dynamic> screenshotsList = jsonResponse['screenshots'];
-        final String imageTersiaire = screenshotsList.isNotEmpty ? screenshotsList.last['path_thumbnail'] : '';
-
-        //On va venir se focaliser sur la partie 'Price' de 'Data' pour pouvoir récupérer le jeu
-        final Map<String, dynamic>? jsonResponse2 = json.decode(response.body)[id.toString()]['data']['price_overview'];
-        
-        //On créé notre var Prix
-        String price; 
-        //Si le jeu n'est pas gratuit (S'il est gratuit price_overview n'existe pas dans le code)
-        if (jsonResponse2 != null) {
-          //Si le prix du jeu est correctement renseigné 
-          if(jsonResponse2['initial_formatted'] != "")
-          {
-            //On récupère le prix initial (avant réduction)
-            price = jsonResponse2['initial_formatted'];
-          } else {
-            //Sinon on récupère le prix final
-            price = jsonResponse2['final_formatted'];
-          }
-        } else {
-          //Sinon on le met gratuit
-          price = "Gratuit";
-        }
-
-        //On envoie tout dans notre constructeur
-        final Game game = Game(id: id, name: name, publisher: publisher, price : price,imageUrl: imageUrl, imageTersiaire : imageTersiaire);
-        games.add(game);
-      }
-    } else {
-      //Si ca ne fonctionne pas /!\ PARFOIS IL NARRIVE PAS A FETCH, IL FAUT JUSTE RELOAD l'APPLICATION
-      throw Exception('Echec du Fetch des informations des Jeux');
-    }
-  }
-  //On renvoie la liste de nos jeux et de leurs informations
-  return games;
-}
 
 //Class principale 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _GameListPageState createState() => _GameListPageState();
 }
 
 //On va créer notre Game list qui extend Home page
 class _GameListPageState extends State<HomePage> {
-  late Future<List<Game>> _futureGames;
+  late Future<List<createGame.Game>> _futureGames;
 
 //Initialisation
   @override
@@ -115,9 +33,9 @@ class _GameListPageState extends State<HomePage> {
   }
 
 //On va venir charger les Ids des jeux, puis leurs informations 
-  Future<List<Game>> _loadGames() async {
-    final gameIds = await fetchGameIds();
-    final games = await fetchGames(gameIds);
+  Future<List<createGame.Game>> _loadGames() async {
+    final gameIds = await steamAPI.fetchGameIdsWithoutParameter();
+    final games = await steamAPI.fetchGames(gameIds);
     return games;
   }
 
@@ -132,7 +50,7 @@ Widget build(BuildContext context) {
       //On affiche en ligne 
       title: Row(
         children: [
-          Expanded(
+          const Expanded(
             //ici le texte accueil qu'on va venir mettre à gauche 
             child: Text(
               'Accueil',
@@ -148,7 +66,7 @@ Widget build(BuildContext context) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => LikelistPage(),
+                  builder: (_) => const LikelistPage(),
                 ),
               );
             },
@@ -159,13 +77,13 @@ Widget build(BuildContext context) {
             ),
           ),
           //On ajoute un espace entre les 2 Svg 
-          SizedBox(width: 40),
+          const SizedBox(width: 40),
           GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => WishlistPage(),
+                  builder: (_) => const WishlistPage(),
                 ),
               );
             },
@@ -178,7 +96,7 @@ Widget build(BuildContext context) {
         ],
       ),
       //Et on modifie la couleur de fond. 
-      backgroundColor: Color(0xFF1A2025),
+      backgroundColor: const Color(0xFF1A2025),
     ),
     
     //On vient afficher le reste de la page 
@@ -194,7 +112,7 @@ Widget build(BuildContext context) {
       
     ),
 
-    backgroundColor: Color(0xFF1A2025),
+    backgroundColor: const Color(0xFF1A2025),
   );
 }
 
@@ -204,16 +122,16 @@ Widget _buildSearchBar() {
   TextEditingController searchController = TextEditingController();
   //On renvoie une APP bar
   return Padding(
-    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
     child : SizedBox(
       height: 50,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
               color: Color(0xFF1e262c),
             ),
           child: Container(
             decoration: BoxDecoration(
-              color: Color(0xFF1e262c),
+              color: const Color(0xFF1e262c),
               borderRadius: BorderRadius.circular(25),
             ),
             //On affiche en Row
@@ -228,13 +146,13 @@ Widget _buildSearchBar() {
                       color: Colors.white,
                     ),
                     //Decoration pour le style
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       fillColor: Color(0xFF1e262c),
                       //Texte de base 
                       hintText: "Rechercher un jeu",
                       hintStyle: TextStyle(color: Colors.white),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                           vertical: 15.0, horizontal: 10.0),
                     ),
                   ),
@@ -258,7 +176,7 @@ Widget _buildSearchBar() {
                       );
                     },
                     //Couleur du bouton de la loupe 
-                    child: Icon(Icons.search, color: Color(0xFF626AF6)),
+                    child: const Icon(Icons.search, color: Color(0xFF626AF6)),
                   ),
                 ),
               ],
@@ -279,9 +197,9 @@ Widget _buildBackgroundImage() {
     //On vient créer notre Box Decoration qui accueillra notre Image de fond 
     decoration: BoxDecoration(
       image: DecorationImage(
-        image: NetworkImage(
+        image: const NetworkImage(
           //On load l'image 
-          'https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/812140\/ss_0ef33c0f230da6ebac94f5959f0e0a8bbc48cf8a.600x338.jpg',
+          'https://cdn.akamai.steamstatic.com/steam/apps/812140/ss_0ef33c0f230da6ebac94f5959f0e0a8bbc48cf8a.600x338.jpg',
         ),
         //On lui fait remplir toute la surface
         fit: BoxFit.cover,
@@ -309,23 +227,23 @@ Widget _buildBackgroundImage() {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   //titre
-                  Text(
+                  const Text(
                     "Assassin's Creed® Odyssey",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24.0,
                     ),
                   ),
-                  SizedBox(height: 10.0),
+                  const SizedBox(height: 10.0),
                   //Description
-                  Text(
+                  const Text(
                     "Enhance your Assassin's Creed® Odyssey experience with the Ultimate Edition.",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 13.0,
                     ),
                   ),
-                  SizedBox(height: 8.0),
+                  const SizedBox(height: 8.0),
                   //notre bouton
                   ElevatedButton(
                     //Quand il est pressé on fait un évenement
@@ -333,34 +251,34 @@ Widget _buildBackgroundImage() {
                       //On va dire qu'on souhaite naviguer aux détails de notre jeu, et on lui passe son ID en info (en String) et on veut pouvoir revenir sur notre page
                       Navigator.push(
                         context, 
-                        PageRouteBuilder(pageBuilder: (_, __, ___) => InfoJeu(gameId: '812140',),),);
+                        PageRouteBuilder(pageBuilder: (_, __, ___) => const InfoJeu(gameId: '812140',),),);
                     },
-                    child: Text(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF626AF6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30.0,
+                        vertical: 10.0,
+                      ),
+                    ),
+                    child: const Text(
                       "En savoir plus",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16.0,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      primary: Color(0xFF626AF6),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 30.0,
-                        vertical: 10.0,
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: 16.0),
+            const SizedBox(width: 16.0),
             //On affiche notre image du jeu
             Expanded(
               flex: 1,
               child: AspectRatio(
                 aspectRatio: 1,
                 child: Image.network(
-                  'https:\/\/cdn.akamai.steamstatic.com\/steam\/apps\/812140\/header.jpg?t=1670596226',
+                  'https://cdn.akamai.steamstatic.com/steam/apps/812140/header.jpg?t=1670596226',
                   fit: BoxFit.cover,
                 ),
               ),
@@ -376,8 +294,8 @@ Widget _buildBackgroundImage() {
 
 
   //Methode de construction de la liste des Jeux. 
-  FutureBuilder<List<Game>> _buildGamesList(){
-      return FutureBuilder<List<Game>>(
+  FutureBuilder<List<createGame.Game>> _buildGamesList(){
+      return FutureBuilder<List<createGame.Game>>(
           future: _futureGames,
           builder: (context, snapshot) {
             //Si notre snapshot à de l'information concernant le jeu
@@ -389,32 +307,30 @@ Widget _buildBackgroundImage() {
                   //Si on est le premier Indeex (Va afficher l'image principale et le texte)
                   if (index == 0) {
                     //on renvoie un conteneur
-                    return Container(
-                      child: Column(
-                        children: [
-                          //Pour afficher notre Jeu principal
-                          Padding(
-                            padding: EdgeInsets.only(top: 15, bottom: 30.0),
-                            child: _buildBackgroundImage(),
-                          ),
-                          //Pour afficher le texte des Meilleures ventes
-                          Align(
-                            alignment: Alignment.centerLeft,
+                    return Column(
+                      children: [
+                        //Pour afficher notre Jeu principal
+                        Padding(
+                          padding: const EdgeInsets.only(top: 15, bottom: 30.0),
+                          child: _buildBackgroundImage(),
+                        ),
+                        //Pour afficher le texte des Meilleures ventes
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            //Padding de droite et gauche
+                            padding: EdgeInsets.symmetric(horizontal: 13.0),
                             child: Padding(
-                              //Padding de droite et gauche
-                              padding: EdgeInsets.symmetric(horizontal: 13.0),
-                              child: Padding(
-                                //Padding avec les cartes
-                                padding: EdgeInsets.only(bottom: 10), // ajouter du padding après le texte
-                                child: Text(
-                                  "Les meilleures ventes",
-                                  style: TextStyle(fontSize: 16, color: Colors.white, decoration : TextDecoration.underline),
-                                ),
+                              //Padding avec les cartes
+                              padding: EdgeInsets.only(bottom: 10), // ajouter du padding après le texte
+                              child: Text(
+                                "Les meilleures ventes",
+                                style: TextStyle(fontSize: 16, color: Colors.white, decoration : TextDecoration.underline),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   }else {
                   final game = games[index -1];
@@ -424,11 +340,11 @@ Widget _buildBackgroundImage() {
                       borderRadius: BorderRadius.circular(5), // On ajoute un bord arrondi
                     ),
                     // On ajoute une marge autour de la carte
-                    margin: EdgeInsets.symmetric(vertical: 7, horizontal: 13), 
+                    margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 13), 
                     child: Container(
                       height: 115, // On ajoute une hateur personnalisée
                       decoration: BoxDecoration(
-                        color: Color(0xFF212B33), // On ajoute la couleur de fond des ListTitle
+                        color: const Color(0xFF212B33), // On ajoute la couleur de fond des ListTitle
                         borderRadius: BorderRadius.circular(5), // On ajoute un bord arrondi au container
                         image: DecorationImage(
                           //On vient mettre en fond de notre carte l'image tersiaire du jeu
@@ -440,7 +356,7 @@ Widget _buildBackgroundImage() {
                       child: Row(
                         children: [
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10.0 ,vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 10.0 ,vertical: 12),
                             child : Expanded(
                             child: AspectRatio(
                               aspectRatio: 1,
@@ -457,23 +373,23 @@ Widget _buildBackgroundImage() {
                           Expanded(
                             flex: 2,
                             child: Padding(
-                              padding: EdgeInsets.all(17),
+                              padding: const EdgeInsets.all(17),
                               child: Column(
                                 //permet d'aligner en horizontal et en vertical
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   // On réduit la taille du titre à 16
-                                  Text(game.name, style: TextStyle(fontSize: 15, color: Colors.white,)),
-                              SizedBox(height: 2),
+                                  Text(game.name, style: const TextStyle(fontSize: 15, color: Colors.white,)),
+                              const SizedBox(height: 2),
                               // On réduit la taille du sous-titre à 13
-                              Text(game.publisher.first, style: TextStyle(fontSize: 13, color: Colors.white,)),
-                              SizedBox(height: 9),
+                              Text(game.publisher.first, style: const TextStyle(fontSize: 13, color: Colors.white,)),
+                              const SizedBox(height: 9),
                               // On affiche "Gratuit" ou "Prix: xxx" selon que le prix est gratuit ou non
                               Row(
                                 children: [
-                                  if (game.price != "Gratuit") Text("Prix: ", style: TextStyle(fontSize: 13, color: Colors.white, decoration : TextDecoration.underline),),
-                                  Text(game.price, style:TextStyle(fontSize: 12, color: Colors.white,)),
+                                  if (game.price != "Gratuit") const Text("Prix: ", style: TextStyle(fontSize: 13, color: Colors.white, decoration : TextDecoration.underline),),
+                                  Text(game.price, style:const TextStyle(fontSize: 12, color: Colors.white,)),
                                 ],
                               )
                             ],
@@ -495,7 +411,7 @@ Widget _buildBackgroundImage() {
                           height: double.infinity,
                           //On blinde la largeur (pour faire un carré)
                           width: 115,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Color(0xFF626AF6),
                             borderRadius: BorderRadius.only(
                               topRight: Radius.circular(5),
@@ -503,7 +419,7 @@ Widget _buildBackgroundImage() {
                             ),
                           ),
                           //On le centre 
-                          child: Center(
+                          child: const Center(
                             //On prends la hauteur de la carte 
                             child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: 10),
@@ -528,7 +444,7 @@ Widget _buildBackgroundImage() {
             child: Text('${snapshot.error}'),
           );
         }
-        return Center(
+        return const Center(
           //L'indicateur de Progrssion
           child: CircularProgressIndicator(),
         );

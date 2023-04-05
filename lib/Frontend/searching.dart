@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 import 'detail_jeu.dart';
+
+// ignore: library_prefixes
+import 'package:projet_flutter/Backend/SteamAPI_fetch.dart' as steamAPI;
+// ignore: library_prefixes
+import 'package:projet_flutter/Backend/Game.dart' as createGame;
+
 
 //Notre classe de Search (Principale)
 class SearchPage extends StatefulWidget {
   final String searchQuery;
   //On veut qu'un texte soit rentré 
-  SearchPage(this.searchQuery);
+  const SearchPage(this.searchQuery, {super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _SearchPageState createState() => _SearchPageState();
 }
 
@@ -40,82 +45,11 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   //On va lancer nos fetch quand la methode est appelée 
-  Future<List<Game>> _searchGames(String searchQuery) async {
-    final gameIds = await _searchGameIds(searchQuery);
-    final games = await fetchGames(gameIds);
+  Future<List<createGame.Game>> _searchGames(String searchQuery) async {
+    final gameIds = await steamAPI.searchGameIds(searchQuery);
+    final games = await steamAPI.fetchGames(gameIds);
     return games;
   }
-  
-  //On fetch les recherhce de jeux pour récupérer les IDs des jeux 
-  Future<List<int>> _searchGameIds(String searchQuery) async {
-    final response = await http.get(Uri.parse('https://steamcommunity.com/actions/SearchApps/$searchQuery'));
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      final gamesJson = json as List<dynamic>;
-      final gameIds = gamesJson.map<int>((gameJson) => int.parse(gameJson['appid'].toString())).toList();
-      return gameIds;
-    } else {
-      throw Exception('Echec du Fetch de la recherche');
-    }
-  }
-
-
-//Crée notre fetch qui va aller chercher les informations d'un jeu en fonction de son ID (Récupérée avant)
-Future<List<Game>> fetchGames(List<int> gameIds) async {
-  final List<Game> games = [];
-
-  for (int id in gameIds) {
-    //requête API
-    final response = await http.get(Uri.parse('https://store.steampowered.com/api/appdetails?appids=$id'));
-
-    if (response.statusCode == 200) {
-      //On va aller dans la partie 'Data' de notre jeu
-      final Map<String, dynamic>? jsonResponse = json.decode(response.body)[id.toString()]['data'];
-      //Pour s'assurer que nos informations ne sont pas null (Au cas ou un jeu ait été retiré ou autre)
-      if (jsonResponse != null) {
-        //On récupère le nom
-        final String name = jsonResponse['name'];
-        //On récupère l'image
-        final String imageUrl = jsonResponse['header_image'];
-        //On récupère le créateur 
-        final List<dynamic> publisher = jsonResponse['publishers'];
-
-        final List<dynamic> screenshotsList = jsonResponse['screenshots'];
-        final String imageTersiaire = screenshotsList.isNotEmpty ? screenshotsList.last['path_thumbnail'] : '';
-
-        //On va venir se focaliser sur la partie 'Price' de 'Data' pour pouvoir récupérer le jeu
-        final Map<String, dynamic>? jsonResponse2 = json.decode(response.body)[id.toString()]['data']['price_overview'];
-        
-        //On créé notre var Prix
-        String price; 
-        //Si le jeu n'est pas gratuit (S'il est gratuit price_overview n'existe pas dans le code)
-        if (jsonResponse2 != null) {
-          //Si le prix du jeu est correctement renseigné 
-          if(jsonResponse2['initial_formatted'] != "")
-          {
-            //On récupère le prix initial (avant réduction)
-            price = jsonResponse2['initial_formatted'];
-          } else {
-            //Sinon on récupère le prix final
-            price = jsonResponse2['final_formatted'];
-          }
-        } else {
-          //Sinon on le met gratuit
-          price = "Gratuit";
-        }
-
-        //On envoie tout dans notre constructeur
-        final Game game = Game(id: id, name: name, publisher: publisher, price : price,imageUrl: imageUrl, imageTersiaire : imageTersiaire);
-        games.add(game);
-      }
-    } else {
-      //Si ca ne fonctionne pas
-      throw Exception('Echec du Fetch des informations des Jeux');
-    }
-  }
-  //On renvoie la liste de nos jeux et de leurs informations
-  return games;
-}
 
 
 //Fonction d'affichage
@@ -123,9 +57,9 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(70),
+        preferredSize: const Size.fromHeight(70),
         child: AppBar(
-          backgroundColor: Color(0xFF1A2025),
+          backgroundColor: const Color(0xFF1A2025),
           leading: IconButton(
             icon: SvgPicture.asset(
               //on va load notre SVG
@@ -137,7 +71,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
           ),
           title: Row(
             //On affiche notre Texte titre de page
-            children: [
+            children: const [
               Expanded( 
                 child: Text(
                   'Recherche',
@@ -154,7 +88,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
       //On appelle notre widget du body 
       body: _buildBody(),
       //Et on modifie la couleur de fond. 
-      backgroundColor: Color(0xFF1A2025),
+      backgroundColor: const Color(0xFF1A2025),
     );
   }
 
@@ -168,13 +102,13 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         ),
         Expanded(
           //On va update la liste des games en fonction de notre Clé Entrée par l'utilisateur
-          child: FutureBuilder<List<Game>>(
+          child: FutureBuilder<List<createGame.Game>>(
             //Call la fonction pour lancer les fetchs
             future: _searchGames(_searchQuery),
             builder: (context, snapshot) {
               //Si on est en attente d'affichage, on affiche le petit icone de chargement
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
+                return const Center(
                   child: CircularProgressIndicator(),
                 );
                 //Sinon quand on a une erreur
@@ -202,7 +136,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
 
 
   //Widget pour construire la liste des  jeux trouvés
-  Widget _buildGamesList(List<Game> games) {
+  Widget _buildGamesList(List<createGame.Game> games) {
     //Pour scroller 
     return SingleChildScrollView(
       child: Column(
@@ -212,8 +146,8 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
             alignment: Alignment.centerLeft,
             //On indique le nombre de jeux trouvés, et sinon on affiche 0 si il y a rien   
             child: Text(
-              "Nombre de jeux trouvés: ${games?.length ?? 0}",
-              style: TextStyle(
+              "Nombre de jeux trouvés: ${games.length}",
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.white,
                 decoration: TextDecoration.underline,
@@ -222,11 +156,11 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
           ),
           ListView.builder(
             //Et dans notre affichage de jeux on va venir afficher le nombre de jeux fetché sous la forme de carte 
-            physics: NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             shrinkWrap: true,
-            itemCount: games?.length,
+            itemCount: games.length,
             itemBuilder: (context, index) {
-              final game = games![index];
+              final game = games[index];
               //On appelle donc la fonction pour construire les cartes de jeux
               return _buildGameCard(game);
             },
@@ -238,18 +172,18 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
 
 
   //FWidget pour construire les Cartes des jeux
-  Widget _buildGameCard(Game game) {
+  Widget _buildGameCard(createGame.Game game) {
     //On renvoie donc une carte
     return Card(
       //modification de l'affichage
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5), 
       ),
-      margin: EdgeInsets.symmetric(vertical: 7, horizontal: 13), 
+      margin: const EdgeInsets.symmetric(vertical: 7, horizontal: 13), 
       child: Container(
         height: 115, 
         decoration: BoxDecoration(
-          color: Color(0xFF212B33), 
+          color: const Color(0xFF212B33), 
           borderRadius: BorderRadius.circular(5), 
           image: DecorationImage(
             //Fond avec l'ilage tersiaire
@@ -262,7 +196,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
         child: Row(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 12),
               child: Expanded(
                 child: AspectRatio(
                   //On affiche d'abord l'image princiaple au format carré 
@@ -277,7 +211,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
             Expanded(
               flex: 2,
               child : Padding(
-            padding: EdgeInsets.all(17),
+            padding: const EdgeInsets.all(17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -285,27 +219,27 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
                 Text(
                   //Puis on affiche le titre
                   game.name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   //L'editeur 
                   game.publisher.first,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Colors.white,
                   ),
                 ),
-                SizedBox(height: 9),
+                const SizedBox(height: 9),
                 Row(
                   //Et le prix
                   children: [
                     //Sinotre prix n'est pas gratuit, on ecris d'abord "Prix"
                     if (game.price != "Gratuit")
-                      Text(
+                      const Text(
                         "Prix: ",
                         style: TextStyle(
                           fontSize: 13,
@@ -316,7 +250,7 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
                       //Et dans tous les cas on ecris le prix
                     Text(
                       game.price,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.white,
                       ),
@@ -345,14 +279,14 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
             child: Container(
               height: double.infinity,
               width: 115,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color(0xFF626AF6),
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(5),
                   bottomRight: Radius.circular(5),
                 ),
               ),
-              child: Center(
+              child: const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text(
@@ -377,14 +311,14 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
 Widget _buildSearchBar() {
   return Padding(
     //Modification de l'affichage
-    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
     child: SizedBox(
       height: 50,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Color(0xFF1e262c),
         ),
-        padding: EdgeInsets.symmetric(horizontal: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 15),
         child: Row(
           children: [
             Expanded(
@@ -395,7 +329,7 @@ Widget _buildSearchBar() {
                   color: Colors.white,
                 ),
                 //On a 'rechercher un jeu de base quand rien n'est tapé
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: "Rechercher un jeu",
                   hintStyle: TextStyle(color: Colors.white),
                   border: InputBorder.none,
@@ -409,13 +343,12 @@ Widget _buildSearchBar() {
                 //On recupere la valeur de notrre texte entre par l'utilisateur 
                 final searchQuery = _searchController.text;
                 //Et on relance notre fonction pour le fetching de jeux 
-                final games = await _searchGames(searchQuery);
                 setState(() {
                   //Et on modifie la valeur de notre SerchQuery 
                   _searchQuery = searchQuery;
                 });
               },
-              child: Padding(
+              child: const Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Icon(Icons.search, color: Color(0xFF626AF6)),
               ),
@@ -427,22 +360,3 @@ Widget _buildSearchBar() {
   );
 }
 }
-
-//Notre classe qui va contenir les informations des Games. 
-class Game {
-  //Son ID
-  final int id;
-  //sOn titre
-  final String name;
-  //Sa première image
-  final String imageUrl;
-  //Son editeur
-  final List<dynamic> publisher;
-  //Son prix 
-  final String price;
-  //Sa seconde image (ici on a pris la 3eme image par rapport au menu principal)
-  final String imageTersiaire;
-
-  Game({required this.id, required this.name, required this.publisher, required this.price,required this.imageUrl, required this.imageTersiaire});
-}
-

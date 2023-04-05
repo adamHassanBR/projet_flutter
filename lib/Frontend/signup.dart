@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
+
 
 class Inscription extends StatefulWidget {
+  const Inscription({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _SignUpPageState createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<Inscription> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final logger = Logger();
+  bool isAlreadyExist = false;
+
 
   //Création des Variables String pour stocker les valeurs des TextFields
   late String _email, _password, _tempPassword;
@@ -27,17 +35,19 @@ class _SignUpPageState extends State<Inscription> {
         await userCredential.user!.sendEmailVerification();
 
         // Redirection vers la page de connexion
+        // ignore: use_build_context_synchronously
         Navigator.pushReplacementNamed(context, '/connexion');
 
         //Catch des erreurs
       } on FirebaseAuthException catch (e) {
         if (e.code == 'weak-password') {
-          print('Le mot de passe est trop faible.');
+          logger.e('Le mot de passe est trop faible.');
         } else if (e.code == 'email-already-in-use') {
-          print('Cet email est déjà utilisé.');
+          isAlreadyExist = true;
+          logger.e('Cet email est déjà utilisé.');
         }
       } catch (e) {
-        print(e.toString());
+        logger.e(e.toString());
       }
     }
   }
@@ -46,25 +56,36 @@ class _SignUpPageState extends State<Inscription> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1a2025),
+      backgroundColor: const Color(0xFF1a2025),
       
       //Notre Visuel
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(50.0, 100.0, 50.0, 50.0),
+      body: Stack(
+      children: [
+        // Ajout de l'image en arrière-plan
+        Positioned.fill(
+          child: Opacity(
+            opacity: 1,
+            child: Image.asset('assets/img/ecran_start.png', fit: BoxFit.cover),
+          ),
+        ),
+        
+        Padding(
+        padding: const EdgeInsets.fromLTRB(30.0, 130.0, 30.0, 50.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
                Container
                  (
-                  padding: const EdgeInsets.symmetric(vertical: 20.0),
-                  child: Text
+                  padding: const EdgeInsets.symmetric(vertical: 1.0),
+                  child: const Text
                   (
-                    'Inscription !',
-                    style: const TextStyle
+                    'Inscription',
+                    style: TextStyle
                     (
                       color: Colors.white,
-                      fontSize: 50.0,
+                      fontSize: 40.0,
+                      fontFamily: 'Google Sans',
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -73,39 +94,38 @@ class _SignUpPageState extends State<Inscription> {
 
                 Container
                 (
-                  padding: const EdgeInsets.symmetric(vertical: 30.0),
-                  child: Text
+                   padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 40.0),
+                  child: const Text
                   (
                     'Veuillez saisir ces différentes informations, afin que vos listes soient sauvegardées.',
-                    style: const TextStyle
+                    style: TextStyle
                     (
                       color: Colors.white,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 17.0,
+                      fontFamily: 'Google Sans',
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
 
 
-
-              //TextField pour accueillir l'EMAIL
-              TextFormField(
-                keyboardType: TextInputType.emailAddress,
+              ///Text Form pour le Nom d'utilisateur
+               TextFormField(
+                // ignore: prefer_const_constructors
                 decoration: InputDecoration
                 (
-                  labelText: "Email",
-                  labelStyle: TextStyle
+                  labelText: "Nom d'utilisateur",
+                  labelStyle: const TextStyle
                   (
                     //Pour le label 'Email'
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
                   filled: true,
-                  fillColor: Color(0xFF1e262c),
-                  border: OutlineInputBorder(
+                  fillColor: const Color(0xFF1e262c),
+                  border: const OutlineInputBorder(
                   ),
-                  focusedBorder: OutlineInputBorder
+                  focusedBorder: const OutlineInputBorder
                   (
                     borderSide: BorderSide
                     (
@@ -113,10 +133,56 @@ class _SignUpPageState extends State<Inscription> {
                       width: 2.0,
                     ),
                   ),
+                  // ignore: prefer_const_constructors
                   enabledBorder: OutlineInputBorder
                   (
+                    // ignore: prefer_const_constructors
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.5),
+                      color: const Color(0xFF1e262c),
+                    ),
+                  ),
+                ),
+                style: const TextStyle
+                  (
+                    //Couleur du texte tapé par l'utilisateur
+                    color: Colors.white,
+                  ),
+              ),
+              //On rajoute de l'espace
+              const SizedBox(height: 16.0),
+
+
+              //TextField pour accueillir l'EMAIL
+              TextFormField(
+                keyboardType: TextInputType.emailAddress,
+                // ignore: prefer_const_constructors
+                decoration: InputDecoration
+                (
+                  labelText: "E-Mail",
+                  labelStyle: const TextStyle
+                  (
+                    //Pour le label 'Email'
+                    fontFamily: 'Google Sans',
+                    color: Colors.white,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF1e262c),
+                  border: const OutlineInputBorder(
+                  ),
+                  focusedBorder: const OutlineInputBorder
+                  (
+                    borderSide: BorderSide
+                    (
+                      color: Colors.white,
+                      width: 2.0,
+                    ),
+                  ),
+                  // ignore: prefer_const_constructors
+                  enabledBorder: OutlineInputBorder
+                  (
+                    // ignore: prefer_const_constructors
+                    borderSide: BorderSide(
+                      color: const Color(0xFF1e262c),
                     ),
                   ),
                 ),
@@ -126,39 +192,49 @@ class _SignUpPageState extends State<Inscription> {
                     color: Colors.white,
                   ),
                   //On ne créé pas le compte tant que ce n'est pas bon. 
-                validator: (input) =>
-                    !input!.contains('@') ? 'Entrez une adresse email valide' : null,
-
+                validator: (input) {
+                  if (!input!.contains('@')) {
+                    return 'Entrez une adresse email valide';
+                  } else if (isAlreadyExist) {
+                    isAlreadyExist = false;
+                    return 'Adresse email déjà existant';
+                  } else {
+                    return null;
+                  }
+                },
                 //Quand on va save, on va sauvegarder l'email
                 onSaved: (input) => _email = input!,
               ),
               //On rajoute de l'espace
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
 
 
 
               //TextField pour le Mot de passe de l'utilisateur
               TextFormField(
+                // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: "Mot de passe",
-                  labelStyle: TextStyle(
+                  labelStyle: const TextStyle(
                     //Pour le label Password
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
                   filled: true,
-                  fillColor: Color(0xFF1e262c),
-                  border: OutlineInputBorder(
+                  fillColor: const Color(0xFF1e262c),
+                  border: const OutlineInputBorder(
                   ),
-                  focusedBorder: OutlineInputBorder(
+                  focusedBorder: const OutlineInputBorder(
                     borderSide: BorderSide(
                       color: Colors.white,
                       width: 2.0,
                     ),
                   ),
+                  // ignore: prefer_const_constructors
                   enabledBorder: OutlineInputBorder(
+                    // ignore: prefer_const_constructors
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.5),
+                      color: const Color(0xFF1e262c),
                     ),
                   ),
                 ),
@@ -173,7 +249,7 @@ class _SignUpPageState extends State<Inscription> {
                   if (value==null || value.isEmpty){
                     return 'Veuillez renseigner un mot de passe';
                   }
-                  else if (value!.length < 6) {
+                  else if (value.length < 6) {
                     return 'Le mot de passe doit contenir au moins 6 caractères';
                   }
                   else {
@@ -185,31 +261,34 @@ class _SignUpPageState extends State<Inscription> {
                 onSaved: (value) => _password = value!,
               ),
               //On rajoute de l'espace
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
 
 
 
               //TextField pour la vérification du mot de passe de l'utilisateur. 
               TextFormField(
+                // ignore: prefer_const_constructors
                 decoration: InputDecoration(
                   labelText: "Confirmez le mot de passe",
-                  labelStyle: TextStyle(
+                  labelStyle: const TextStyle(
                     //Pour le Label Confirmation de Mot de passe
                     fontFamily: 'Google Sans',
                     color: Colors.white,
                   ),
                   filled: true,
-                  fillColor: Color(0xFF1e262c),
-                  border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
+                  fillColor: const Color(0xFF1e262c),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: const OutlineInputBorder(
                     borderSide: BorderSide(
                       color: Colors.white,
                       width: 2.0,
                     ),
                   ),
+                  // ignore: prefer_const_constructors
                   enabledBorder: OutlineInputBorder(
+                    // ignore: prefer_const_constructors
                     borderSide: BorderSide(
-                      color: Colors.white.withOpacity(0.5),
+                      color: const Color(0xFF1e262c),
                     ),
                   ),
                 ),
@@ -229,7 +308,7 @@ class _SignUpPageState extends State<Inscription> {
                 //ICI on n'enregistre rien si on s'inscrit
               ),
               //On rajoute de l'espace
-              const SizedBox(height: 100.0),
+              const SizedBox(height: 90.0),
 
 
 
@@ -239,14 +318,13 @@ class _SignUpPageState extends State<Inscription> {
                 onPressed: _submit,
                   style: ElevatedButton.styleFrom
                   (
-                    padding: const EdgeInsets.fromLTRB(122.5, 20.0, 122.5, 20.0),
-                    primary: Color(0xFF636AF6),
+                    padding: const EdgeInsets.fromLTRB(145.5, 20.0, 145.5, 20.0), backgroundColor: const Color(0xFF636AF6),
                     shape: RoundedRectangleBorder
                     (
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(5.0),
                     ),
                   ),
-                child: Text (
+                child: const Text (
                   "S'inscrire",
                    style: TextStyle(
                     fontFamily: 'Google Sans',
@@ -256,7 +334,7 @@ class _SignUpPageState extends State<Inscription> {
                   ),
               ),
               //On rajoute de l'espace
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
 
               //BOUTON CONNEXION
@@ -266,16 +344,14 @@ class _SignUpPageState extends State<Inscription> {
                 },
                 style: ElevatedButton.styleFrom
                 (
-                  padding: const EdgeInsets.fromLTRB(110.0, 20.0, 110.0, 20.0),
-                  primary: Color(0xFF1a2025),
-                  onPrimary: Colors.white,
+                  foregroundColor: Colors.white, backgroundColor: const Color(0xFF1a2025), padding: const EdgeInsets.fromLTRB(130.5, 20.0, 130.5, 20.0),
                   shape: RoundedRectangleBorder
                   (
-                    borderRadius: BorderRadius.circular(10.0),
-                    side: BorderSide(color: Color(0xFF636AF6), width: 2.0),
+                    borderRadius: BorderRadius.circular(5.0),
+                    side: const BorderSide(color: Color(0xFF636AF6), width: 2.0),
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   "Se connecter",
                   style: TextStyle(
                     fontFamily: 'Google Sans',
@@ -289,6 +365,8 @@ class _SignUpPageState extends State<Inscription> {
           ),
         ),
       ),
+      ],
+    ),
     );
   }
 

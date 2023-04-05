@@ -1,141 +1,20 @@
-import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
-
-//On va venir fetcher toute l'information de notre jeu en fonction de son ID
-Future<Map<String, dynamic>> fetchGameDetails(String gameId) async {
-  //On va dans l'API
-  final url = 'https://store.steampowered.com/api/appdetails?appids=$gameId';
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    final jsonResponse = jsonDecode(response.body)[gameId];
-    //On récupère l'info
-    final gameDetails = jsonResponse['data'];
-    //on enregistre son nom
-    final String titre = gameDetails['name'];
-    //On enregistre son editeur
-    final List<dynamic> editeurList = gameDetails['publishers'];
-    final String editeur = editeurList.isNotEmpty ? editeurList.first : '';
-    //on recupère son image de jeu
-    final String imagePrincipale = gameDetails['header_image'];
-    //on recupère une seconde image
-    final List<dynamic> screenshotsList = gameDetails['screenshots'];
-    final String imageSecondaire = screenshotsList.isNotEmpty ? screenshotsList.first['path_thumbnail'] : '';
-    final String imageTersiaire = screenshotsList.isNotEmpty ? screenshotsList.last['path_thumbnail'] : '';
-
-    //on récupère sa description
-    final String description = gameDetails['detailed_description'];
-    //on Va clarifier la description
-    final String cleanedDescription = cleanDescription(description);
-
-    //on va charger toute cette info dans un tableau
-    final Map<String, dynamic> gameData = {
-      'titre': titre,
-      'editeur': editeur,
-      'imagePrincipale': imagePrincipale,
-      'imageSecondaire': imageSecondaire,
-      'imageTersiaire' : imageTersiaire,
-      'description': cleanedDescription,
-    };
-    //On renvoie le tableau
-    return gameData;
-  } else {
-    throw Exception('Echec du chargement des informations');
-  }
-}
-
-//Permet de Fetch le username des utilisateurs Steams en fonction de leur ID
-Future<String> fetchSteamUsername(String steamId) async {
-  //Clé API Steam de Thibault Gautier
-  final apiKey = "345E950B428C0A29F7ED5A936D461277";
-  //On fetch à cet url
-  final url =
-      "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key=$apiKey&format=json&steamids=$steamId";
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    final jsonResponse = json.decode(response.body);
-    final username = jsonResponse['response']['players'][0]['personaname'];
-    // if(username.length > 25) {
-    //       username = username.substring(0, username.lastIndexOf(' '));
-    // }
-    return username;
-  } else {
-    throw Exception('Failed to fetch steam username.');
-  }
-}
-
-//On va venir fetch nos commentaire via l'API
-Future<List<Map<String, dynamic>>> fetchGameReviews(String gameId) async {
-  //On choppe le jeu en fonction de son ID via l'API
-  final url = 'https://store.steampowered.com/appreviews/$gameId?json=1';
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    final jsonResponse = jsonDecode(response.body)['reviews'];
-    final List<Map<String, dynamic>> reviews = [];
-    //Si on a pas une erreur lors du load
-    if (jsonResponse != null) {
-      //Pour tous les reviews disponibles
-      for (var review in jsonResponse) {
-        //On recupère l'auteur 
-        final idSteam = review['author']['steamid'];
-        //On recupère sa note (Soit bonne soit mauvaise)
-        final etoileVote = review['voted_up'];
-        //On recupère son commentaire
-        final commentaireClient = review['review'];
-
-        // On vérifie la longueur du commentaire pour éviter de charger les commentaires de plus de 1000 caractères, afin d'eviter le spam
-        if (commentaireClient.length > 1500) {
-          continue; // Ignorer cette revue et passer à la suivante
-        }
-        //On ajoute dans le tableau des reviews avec ses infos 
-        reviews.add({
-          'idSteam': idSteam,
-          'etoileVote': etoileVote,
-          'commentaireClient': commentaireClient,
-        });
-      }
-    }
-    //On renvoien le tableau 
-    return reviews;
-  } else {
-    throw Exception('Echec du chargement des Commentaires');
-  }
-}
-
-
-
-//Fonction qui permet de clarifier la description en supprimant les balises. 
-String cleanDescription(String description) {
-  // Remplacer toutes les balises <br> par un retour à la ligne
-  description = description.replaceAll('<br>', '\n');
-  description = description.replaceAll('<br />', '\n');
-  description = description.replaceAll('<br/>', '\n');
-
-  // Remplacer toutes les balises &quot; par un "
-  description = description.replaceAll('&quot;', '"');
-
-  // Remplacer toutes les balises <li>; par un tiret
-  description = description.replaceAll('<li>', '-');
-  description = description.replaceAll('</li>', '\n');
-
-  // Supprimer les balises <p>, <h1>, <h2> ... et les balises <img>, <strong>, <ul>, <ol>, <i>, <a>
-  description = description.replaceAll(RegExp(r'<\/?p>|<\/?h1>|<\/?h2>|<\/?h3>|<\/?h4>|<\/?h5>|<\/?i>|<\/?h6>|<\/?ol>|<\/?ul>|<ul.*?>|<\/?strong>|<img.*?>|<a.*?>|<\/?a>|<h1.*?>|<h2.*?>|<h3.*?>|<h4.*?>|<h5.*?>|<h6.*?>'), '');
-  return description;
-}
+// ignore: library_prefixes
+import 'package:projet_flutter/Backend/SteamAPI_fetch.dart' as steamAPI;
 
 
 class InfoJeu extends StatefulWidget {
   //L'id pour indentifier le jeu
   final String gameId;
 
-  InfoJeu({required this.gameId});
+  const InfoJeu({super.key, required this.gameId});
 
   @override
+  // ignore: library_private_types_in_public_api
   _InfoJeuState createState() => _InfoJeuState();
 }
 
@@ -149,17 +28,9 @@ class _InfoJeuState extends State<InfoJeu> {
   @override
   void initState() {
     super.initState();
-    _gameDetailsFuture = fetchGameDetails(widget.gameId);
-    _gameCommentairesFuture = fetchGameReviews(widget.gameId);
-
-    //Pour verifier que les commentaires sont bien Fetch
-    // _gameCommentairesFuture.then((reviews) {
-    //   print('Nombre de commentaires récupérés : ${reviews.length}');
-    // }).catchError((error) {
-    //   print('Erreur lors de la récupération des commentaires : $error');
-    // });
+    _gameDetailsFuture = steamAPI.fetchGameDetails(widget.gameId);
+    _gameCommentairesFuture = steamAPI.fetchGameReviews(widget.gameId);
   }
-
 
 
 
@@ -169,7 +40,7 @@ Widget build(BuildContext context) {
   return Scaffold(
     //Appelle le builder de la classe AppBar Widget 
     appBar: AppBarWidget(gameId: widget.gameId),
-    backgroundColor: Color(0xFF1A2025),
+    backgroundColor: const Color(0xFF1A2025),
     // On a un body future car le fetching des infos du jeu est un future
     body : FutureBuilder<Map<String, dynamic>>(
       //Pour les details du jeu on appelle le fetching 
@@ -234,14 +105,14 @@ Widget build(BuildContext context) {
                                   } else if (snapshot.hasError) {
                                     return Center(child: Text('${snapshot.error}'));
                                   } else {
-                                    return Center(child: CircularProgressIndicator());
+                                    return const Center(child: CircularProgressIndicator());
                                   }
                                 },
                               )
                               //Si on est dans les commentaires alors on affiche les commentaires. 
                             : Text(
                                 gameData['description'],
-                                style: TextStyle(fontSize: 16, color: Colors.white),
+                                style: const TextStyle(fontSize: 16, color: Colors.white),
                               ),
                       ),
                     ],
@@ -255,7 +126,7 @@ Widget build(BuildContext context) {
         } else if (snapshot.hasError) {
           return Center(child: Text('${snapshot.error}'));
         } else {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
       },
     ),
@@ -264,20 +135,21 @@ Widget build(BuildContext context) {
 }
 
 
-
-
+// ignore: must_be_immutable
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final String gameId;
   DatabaseReference? _likesRef;
   DatabaseReference? _wishlistRef;
 
 
-  AppBarWidget({required this.gameId});
+  AppBarWidget({super.key, required this.gameId});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AppBarWidgetState createState() => _AppBarWidgetState();
 
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
 class _AppBarWidgetState extends State<AppBarWidget> {
@@ -289,6 +161,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
 
     super.initState();
     widget._likesRef = FirebaseDatabase.instance
+        // ignore: deprecated_member_use
         .reference()
         .child('liked_games')
         .child(FirebaseAuth.instance.currentUser!.uid)
@@ -296,6 +169,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
 
 
     widget._wishlistRef = FirebaseDatabase.instance
+        // ignore: deprecated_member_use
         .reference()
         .child('wish_games')
         .child(FirebaseAuth.instance.currentUser!.uid)
@@ -321,7 +195,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Color(0xFF1A2025),
+      backgroundColor: const Color(0xFF1A2025),
       leading: IconButton(
         icon: SvgPicture.asset(
           'assets/svg/back.svg',
@@ -331,7 +205,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
       ),
       title: Row(
         children: [
-          Expanded(
+          const Expanded(
             child: Text(
               "Détails du jeu",
               style: TextStyle(
@@ -345,23 +219,16 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             onPressed: () {
               setState(() {
                 _isLiked = !_isLiked;
-                if (_isLiked) {
-                  print('Bouton like appuyé');
-                  // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
-                  widget._likesRef!.set(widget.gameId).then((_) {
-                    print('Ajout du like pour le jeu ${widget.gameId}');
-                  }).catchError((error) {
-                    print('Erreur lors de l\'ajout du like pour le jeu ${widget.gameId}: $error');
-                  });
-                } else {
-                  // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
-                  widget._likesRef!.remove().then((_) {
-                    print('Suppression du like pour le jeu ${widget.gameId}');
-                  }).catchError((error) {
-                    print('Erreur lors de la suppression du like pour le jeu ${widget.gameId}: $error');
-                  });
-                }
-              });
+                //permet de gérer l'état si notre _likesRef est null, et eviter le crash
+                if (widget._likesRef != null) {
+                  if (_isLiked) {
+                    // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
+                    widget._likesRef!.set(widget.gameId);
+                  } else {
+                    // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
+                    widget._likesRef!.remove();
+                  }
+              }});
             },
             icon: SvgPicture.asset(
               _isLiked ? 'assets/svg/like_full.svg' : 'assets/svg/like.svg',
@@ -370,28 +237,21 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             ),
           ),
 
-          SizedBox(width: 40),
+          const SizedBox(width: 40),
           IconButton(
             onPressed: () {
               setState(() {
                 _isInWishlist = !_isInWishlist;
-                if (_isInWishlist) {
-                  print('Bouton wish appuyé');
-                  // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
-                  widget._wishlistRef!.set(widget.gameId).then((_) {
-                    print('Ajout du wish pour le jeu ${widget.gameId}');
-                  }).catchError((error) {
-                    print('Erreur lors de l\'ajout du wish pour le jeu ${widget.gameId}: $error');
-                  });
-                } else {
-                  // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
-                  widget._wishlistRef!.remove().then((_) {
-                    print('Suppression du wish pour le jeu ${widget.gameId}');
-                  }).catchError((error) {
-                    print('Erreur lors de la suppression du wish pour le jeu ${widget.gameId}: $error');
-                  });
-                }
-              });
+                //permet de gérer l'état si notre _wishlistRef est null, et eviter le crash
+                if (widget._wishlistRef != null) {
+                  if (_isInWishlist) {
+                    // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
+                    widget._wishlistRef!.set(widget.gameId);
+                  } else {
+                    // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
+                    widget._wishlistRef!.remove();
+                  }
+              }});
             },
             icon: SvgPicture.asset(
               _isInWishlist ? 'assets/svg/whishlist_full.svg' : 'assets/svg/whishlist.svg',
@@ -411,7 +271,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
 class GameCardWidget extends StatelessWidget {
   final Map<String, dynamic> gameData;
   //On veut qu'il y ait la data qui soient demandée lors de l'appel
-  GameCardWidget({required this.gameData});
+  const GameCardWidget({super.key, required this.gameData});
 
   @override
   Widget build(BuildContext context) {
@@ -422,7 +282,7 @@ class GameCardWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         //On veut créer une carte poiur afficher les infos du Jeu (Titre, editeur, image)
         child: Card(
-          color: Color(0xFF293136),
+          color: const Color(0xFF293136),
           child: Stack(
             children: [
               Opacity(
@@ -456,7 +316,7 @@ class GameCardWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     //Et on veut une colonne pour afficher le titre et l'editeur 
                     child: Column(
@@ -467,13 +327,13 @@ class GameCardWidget extends StatelessWidget {
                         //On ajoute le titre du jeu
                         Text(
                           gameData['titre'],
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          style: const TextStyle(fontSize: 18, color: Colors.white),
                         ),
                         //On ajoute un espace puis lediteur du jeu
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           '${gameData['editeur']}',
-                          style: TextStyle(fontSize: 14, color: Colors.white),
+                          style: const TextStyle(fontSize: 14, color: Colors.white),
                         ),
                       ],
                     ),
@@ -499,7 +359,7 @@ class ButtonsWidget extends StatelessWidget {
   final bool showingReviews;
 
   //ON veut savoir si on a press dessus, et si on dot afficher les reviews ou non
-  ButtonsWidget({required this.onDescriptionPressed, required this.onReviewsPressed, required this.showingReviews});
+  const ButtonsWidget({super.key, required this.onDescriptionPressed, required this.onReviewsPressed, required this.showingReviews});
 
   //Notre builder
   @override
@@ -514,13 +374,13 @@ class ButtonsWidget extends StatelessWidget {
             onPressed: onDescriptionPressed,
             style: ElevatedButton.styleFrom(
               //Quand il est appuyé ou non on change sa couleur
-              primary: showingReviews ? Color(0xFF1A2025) : Color(0xff626af6),
-              side: BorderSide(
+              backgroundColor: showingReviews ? const Color(0xFF1A2025) : const Color(0xff626af6),
+              side: const BorderSide(
                 color: Color(0xff626af6),
                 width: 1,
                 ), 
                 //On rajoute du radius et on en enlève pour uniformiser les boutons
-              shape: RoundedRectangleBorder(
+              shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(5),
                     bottomLeft: Radius.circular(5),
@@ -529,7 +389,7 @@ class ButtonsWidget extends StatelessWidget {
                   ),
                 ), 
                 //On augmente sa height
-              minimumSize: Size(double.infinity, 40),
+              minimumSize: const Size(double.infinity, 40),
             ),
             child: Text(
               'DESCRIPTION',
@@ -548,13 +408,13 @@ class ButtonsWidget extends StatelessWidget {
             onPressed: onReviewsPressed,
             style: ElevatedButton.styleFrom(
                //Quand il est appuyé ou non on change sa couleur
-              primary: showingReviews ? Color(0xff626af6) : Color(0xFF1A2025),
-              side: BorderSide(
+              backgroundColor: showingReviews ? const Color(0xff626af6) : const Color(0xFF1A2025),
+              side: const BorderSide(
                 color: Color(0xff626af6) ,
                 width: 1,
                 ), 
                  //On rajoute du radius et on en enlève pour uniformiser les boutons
-              shape: RoundedRectangleBorder(
+              shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(0),
                     bottomLeft: Radius.circular(0),
@@ -563,7 +423,7 @@ class ButtonsWidget extends StatelessWidget {
                   ),
                 ),
                  //On augmente sa height
-              minimumSize: Size(double.infinity, 40),
+              minimumSize: const Size(double.infinity, 40),
             ),
             child: Text(
               'AVIS',
@@ -588,7 +448,7 @@ class ButtonsWidget extends StatelessWidget {
 class ReviewsListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> reviews;
   //On veut que l'appel envoie les reviews en List<Map<String, dynamic>>. 
-  ReviewsListWidget({required this.reviews});
+  const ReviewsListWidget({super.key, required this.reviews});
 
   @override
   Widget build(BuildContext context) {
@@ -596,10 +456,10 @@ class ReviewsListWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: reviews.length,
           itemBuilder: (context, index) {
             final review = reviews[index];
@@ -609,10 +469,10 @@ class ReviewsListWidget extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5.0),
               ),
-              color: Color(0xFF232B31),
+              color: const Color(0xFF232B31),
               child: Padding(
                 //on ajoute du padding pour homogénéiser 
-                padding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 30.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 30.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -625,7 +485,7 @@ class ReviewsListWidget extends StatelessWidget {
                       children: [
                         FutureBuilder<String>(
                           //Permet d'aller récupérer le Blaz d'un utilisateur Steam en fonction de son ID 
-                          future: fetchSteamUsername(review['idSteam']),
+                          future: steamAPI.fetchSteamUsername(review['idSteam']),
                           builder: (context, snapshot) {
                             //Si on est connecté 
                             if (snapshot.connectionState == ConnectionState.done) {
@@ -633,7 +493,7 @@ class ReviewsListWidget extends StatelessWidget {
                                 return Text(
                                   //On renvoie du texte en fonctiond e ce que le fetch nous renvoie 
                                   snapshot.data!,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     color: Colors.white,
                                     decoration: TextDecoration.underline,
@@ -641,7 +501,7 @@ class ReviewsListWidget extends StatelessWidget {
                                 );
                                 //SI il y a une erreur 
                               } else if (snapshot.hasError) {
-                                return Text(
+                                return const Text(
                                   "Erreur de chargement de l'utilisateur",
                                   style: TextStyle(
                                     fontSize: 16,
@@ -652,7 +512,7 @@ class ReviewsListWidget extends StatelessWidget {
                               }
                             }
                             // On affiche un indicateur de chargement en attendant que la fonction fetchSteamUsername soit terminée
-                            return CircularProgressIndicator();
+                            return const CircularProgressIndicator();
                           },
                         ),
                         //Affichage de nos etoiles. Si bien 5 etoiles, si pas bien 1 etoile. 
@@ -666,7 +526,7 @@ class ReviewsListWidget extends StatelessWidget {
                     //On affiche notre commentaire client. 
                     Text(
                       review['commentaireClient'],
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ],
                 ),
