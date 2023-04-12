@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
+// ignore: unused_import
+import 'package:projet_flutter/Backend/database_connexion.dart';
 
 class Inscription extends StatefulWidget {
   const Inscription({super.key});
@@ -16,6 +17,8 @@ class Inscription extends StatefulWidget {
 class _SignUpPageState extends State<Inscription> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final Database _register = Database();
+
 
   //Permet de voir si on a modifier notre texte pour supprimer notre erreur SVG
   final TextEditingController _passwordController = TextEditingController();
@@ -128,47 +131,46 @@ void _updatePseudoError() {
 
 
 
-  //Fonction lorsqu'on appuye sur le bouton "S'inscrire"
+    //Fonction lorsqu'on appuye sur le bouton "S'inscrire"
   void _submit() async {
     //Si le form est valide
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      //On try catch des erreurs 
-      try {
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-            email: _email, password: _password);
 
-        // Envoi d'un email de vérification à l'utilisateur créé
-        await userCredential.user!.sendEmailVerification();
-      
+      try {
+        // Appeler signUp() depuis l'instance de Backend
+        await _register.signUp(_email, _password);
+
         //On connecte l'utilisateur
         await _auth.signInWithEmailAndPassword(email: _email, password: _password);
 
         // Redirection vers la page de connexion
         // ignore: use_build_context_synchronously
         Navigator.pushReplacementNamed(context, '/home');
-
-        //Catch des erreurs
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'weak-password') {
+      } catch (error) {
+        if (error.toString().contains('Le mot de passe est trop faible.')) {
+          // Gérer l'erreur 'Le mot de passe est trop faible.'
           logger.e('Le mot de passe est trop faible.');
-        } else if (e.code == 'email-already-in-use') {
+        } else if (error.toString().contains('Cet email est déjà utilisé.')) {
+          // Gérer l'erreur 'Cet email est déjà utilisé.'
           isAlreadyExist = true;
           logger.e('Cet email est déjà utilisé.');
+        } else {
+          // Gérer les autres erreurs
+          logger.e(error.toString());
         }
-      } catch (e) {
-        logger.e(e.toString());
       }
     } else {
-    // On Met à jour l'état des icônes d'avertissement si on ne remplis pas les conditions necessaire à leur apparition. 
-    setState(() {
-      _showPseudoErrorIcon = _pseudoController.text.isEmpty;
-      _showEmailErrorIcon = _emailController.text.isEmpty || !_emailController.text.contains('@');
-      _showPasswordErrorIcon = _passwordController.text.isEmpty || _passwordController.text.length < 6;
-      _showConfirmPasswordErrorIcon = _confirmPasswordController.text.isEmpty || _confirmPasswordController.text != _passwordController.text;
-    });
+      // On met à jour l'état des icônes d'avertissement si on ne remplit pas les conditions nécessaires à leur apparition.
+      setState(() {
+        _showPseudoErrorIcon = _pseudoController.text.isEmpty;
+        _showEmailErrorIcon = _emailController.text.isEmpty || !_emailController.text.contains('@');
+        _showPasswordErrorIcon = _passwordController.text.isEmpty || _passwordController.text.length < 6;
+        _showConfirmPasswordErrorIcon = _confirmPasswordController.text.isEmpty || _confirmPasswordController.text != _passwordController.text;
+      });
+    }
   }
-  }
+
 
   //Front de l'appli
   @override

@@ -1,10 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 // ignore: library_prefixes
 import 'package:projet_flutter/Backend/SteamAPI_fetch.dart' as steamAPI;
+import 'package:projet_flutter/Backend/database_connexion.dart';
 
 
 class InfoJeu extends StatefulWidget {
@@ -138,11 +137,9 @@ Widget build(BuildContext context) {
 // ignore: must_be_immutable
 class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   final String gameId;
-  DatabaseReference? _likesRef;
-  DatabaseReference? _wishlistRef;
 
 
-  AppBarWidget({super.key, required this.gameId});
+  const AppBarWidget({super.key, required this.gameId});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -152,49 +149,41 @@ class AppBarWidget extends StatefulWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
+
+//permet l'affichage des likes et Wishlist 
 class _AppBarWidgetState extends State<AppBarWidget> {
+  //pour gérer létat des likes et wish 
   bool _isLiked = false;
   bool _isInWishlist = false;
 
-  @override
+  //pour gerer la connexion a la datbase 
+  final Database _auth = Database();
+
+//On initailise en appelant la fonction qui va initialiser si les svg doivent etre colores ou non 
+ @override
   void initState() {
-
     super.initState();
-    widget._likesRef = FirebaseDatabase.instance
-        // ignore: deprecated_member_use
-        .reference()
-        .child('liked_games')
-        .child(FirebaseAuth.instance.currentUser!.uid)
-        .child(widget.gameId);
+    _initLikeAndWishlistState();
+  }
 
+//permet de savoir si notre SVG est deja liké ou wishlisté, et donc de gérer son affichage, et l'état en data base 
+  Future<void> _initLikeAndWishlistState() async {
+    //pour;les likes et wish 
+    bool isLiked = await _auth.isLiked(widget.gameId);
+    bool isInWishlist = await _auth.isInWishlist(widget.gameId);
 
-    widget._wishlistRef = FirebaseDatabase.instance
-        // ignore: deprecated_member_use
-        .reference()
-        .child('wish_games')
-        .child(FirebaseAuth.instance.currentUser!.uid)
-        .child(widget.gameId);
-
-
-    widget._likesRef!.once().then((snapshot) {
-      if (snapshot.snapshot.value != null) {
-        setState(() {
-          _isLiked = true;
-        });
-      }
-
-    widget._wishlistRef!.once().then((snapshot) {
-      if (snapshot.snapshot.value != null) {
-        setState(() {
-          _isInWishlist = true;
-        });
-      }
+    //On lui donne son etat initial 
+    setState(() {
+      _isLiked = isLiked; 
+      _isInWishlist = isInWishlist;
     });
-  });}
+  }
 
   @override
+  //Widget d'affichage 
   Widget build(BuildContext context) {
     return AppBar(
+      //Du style 
       backgroundColor: const Color(0xFF1A2025),
       leading: IconButton(
         icon: SvgPicture.asset(
@@ -215,21 +204,18 @@ class _AppBarWidgetState extends State<AppBarWidget> {
               ),
             ),
           ),
+          //notre bouton LIKES 
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
                 _isLiked = !_isLiked;
                 //permet de gérer l'état si notre _likesRef est null, et eviter le crash
-                if (widget._likesRef != null) {
-                  if (_isLiked) {
-                    // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
-                    widget._likesRef!.set(widget.gameId);
-                  } else {
-                    // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
-                    widget._likesRef!.remove();
-                  }
-              }});
+              });
+              //on va faire la connection a la data base pour changer son etat en fonction de s'il a deja ete alike ou non
+              await _auth.connectToLike(widget.gameId, _isLiked); 
+
             },
+            //on va load le svg des likes en fonction de son etat 
             icon: SvgPicture.asset(
               _isLiked ? 'assets/svg/like_full.svg' : 'assets/svg/like.svg',
               height: 20,
@@ -237,22 +223,21 @@ class _AppBarWidgetState extends State<AppBarWidget> {
             ),
           ),
 
+          //DU PADDInG 
           const SizedBox(width: 40),
+
+          //notre bouton wishlists
           IconButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
                 _isInWishlist = !_isInWishlist;
                 //permet de gérer l'état si notre _wishlistRef est null, et eviter le crash
-                if (widget._wishlistRef != null) {
-                  if (_isInWishlist) {
-                    // Ajoute l'ID du jeu dans la base de données si l'utilisateur like le jeu
-                    widget._wishlistRef!.set(widget.gameId);
-                  } else {
-                    // Supprime l'ID du jeu de la base de données si l'utilisateur annule son like
-                    widget._wishlistRef!.remove();
-                  }
-              }});
+              });
+             //on va faire la connection a la data base pour changer son etat en fonction de s'il a deja ete wishlisté ou non
+              await _auth.connectToWishlist(widget.gameId, _isInWishlist); 
+
             },
+            //On va load le svg des wishlist en fonction de son etat 
             icon: SvgPicture.asset(
               _isInWishlist ? 'assets/svg/whishlist_full.svg' : 'assets/svg/whishlist.svg',
               height: 20,

@@ -34,7 +34,6 @@ class _LikelistPageState extends State<LikelistPage> {
   }
 
 
-
 @override
 Widget build(BuildContext context) {
   return Scaffold(

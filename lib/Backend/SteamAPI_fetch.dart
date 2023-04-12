@@ -133,22 +133,21 @@ Future<List<Game>> fetchGames(List<int> gameIds) async {
 
 
 
-
-
-
   //On fetch les recherche de jeux pour récupérer les IDs des jeux 
   Future<List<int>> searchGameIds(String searchQuery) async {
+    //On veut aller à cette adresse
     final response = await http.get(Uri.parse('https://steamcommunity.com/actions/SearchApps/$searchQuery'));
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       final gamesJson = json as List<dynamic>;
+      //On recupère les ids des jeux resuktants de la recherche 
       final gameIds = gamesJson.map<int>((gameJson) => int.parse(gameJson['appid'].toString())).toList();
       return gameIds;
     } else {
+      //Si on a une erreur
       throw Exception('Echec du Fetch de la recherche');
     }
   }
-
 
 
 
@@ -270,12 +269,15 @@ Future<String> fetchSteamUsername(String steamId) async {
   final response = await http.get(Uri.parse(url));
   if (response.statusCode == 200) {
     final jsonResponse = json.decode(response.body);
+    //On récupère le pseudo Steam
     String username = jsonResponse['response']['players'][0]['personaname'];
     if(username.length > 25) {
+      //S'il est trop grand, on le tronc 
         username = username.substring(0, 25);
     }
     return username;
   } else {
+    //Si on a une erreur 
     throw Exception('Failed to fetch steam username.');
   }
 }
