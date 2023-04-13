@@ -48,7 +48,6 @@ class _SignUpPageState extends State<Inscription> {
   //Création des Variables String pour stocker les valeurs des TextFields
   late String _email, _password, _tempPassword='';
 
-// Je voudrais que quand il y a une erreur dans les champs (comme par exemple, "Les mots de passe ne correspondent pas"), dans le TextField tout à droite je voudrai qu'on affiche le SVG "warning.svg", et  
   @override
 void initState() {
   super.initState();

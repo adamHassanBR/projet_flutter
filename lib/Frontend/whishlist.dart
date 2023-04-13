@@ -25,6 +25,7 @@ class _WishlistPageState extends State<WishlistPage> {
   @override
   void initState() {
     super.initState();
+    //permet de lancer la connexion à la data base 
     _likesRef = FirebaseDatabase.instance
         // ignore: deprecated_member_use
         .reference()
@@ -33,6 +34,7 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
 @override
+//Notre widget d'affichage
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: PreferredSize(
@@ -67,6 +69,7 @@ Widget build(BuildContext context) {
     body: StreamBuilder(
       stream: _likesRef.onValue,
       builder: (context, snapshot) {
+        //Si on a de la donnée en data base pour les jeux wishlistés 
         if (snapshot.hasData && snapshot.data?.snapshot.value != null) {
           // Récupérer la liste des IDs de jeux likés
           Map<dynamic, dynamic> likes =
@@ -75,10 +78,12 @@ Widget build(BuildContext context) {
               likes.keys.map((key) => int.parse(key.toString())).toList();
           return _buildLikedGamesList(likedGameIds);
         } else {
+          //Sinon on va juste afficher le SVG  et le texte
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                //affichage du SVG
                 SvgPicture.asset(
                   'assets/svg/empty_whishlist.svg',
                   height: 150,
@@ -86,6 +91,7 @@ Widget build(BuildContext context) {
                 ),
                 const SizedBox(height: 70),
                 const Text(
+                  //Affichage du texte
                   "Vous n'avez pas encore ajouté de contenu.\n\nCliquez sur l'étoile pour en rajouter",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.white),
@@ -100,17 +106,22 @@ Widget build(BuildContext context) {
   );
 }
 
+//Fonction permettant de construire la liste des jeux à afficher (C'est la meême que dans like)
   FutureBuilder<List<createGame.Game>> _buildLikedGamesList(List<int> likedGameIds) {
   return FutureBuilder<List<createGame.Game>>(
+    //On appelle notre fetch des jeux en fonction de leurs IDs pour obtenir certaines de leurs infos 
     future: steamAPI.fetchGames(likedGameIds),
     builder: (context, snapshot) {
       if (snapshot.hasData) {
         final games = snapshot.data!;
+        //on renvoie un listview 
         return ListView.builder(
           itemCount: games.length,
           itemBuilder: (context, index) {
             final game = games[index];
+            //Et on construit chaque jeu sous forme de card 
             return Card(
+              //Personalisation de l'affichage
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5),
               ),
@@ -129,6 +140,7 @@ Widget build(BuildContext context) {
                     ),
                   ),
                 ),
+                //Fin de personnalisation
                 child: Row(
                   children: [
                     Padding(
@@ -136,6 +148,7 @@ Widget build(BuildContext context) {
                       child: Expanded(
                         child: AspectRatio(
                           aspectRatio: 1,
+                          //On affiche l'image principale
                           child: Image.network(
                             game.imageUrl,
                             fit: BoxFit.cover,
@@ -148,29 +161,36 @@ Widget build(BuildContext context) {
                       child: Padding(
                         padding: const EdgeInsets.all(17),
                         child: Column(
+                          //Pour aligner au centre à gauche 
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            //on affiche le titre du jeu 
                             Text(
                               game.name,
                               style: const TextStyle(fontSize: 15, color: Colors.white),
                             ),
                             const SizedBox(height: 2),
+                            //on affiche l'editeur
                             Text(
                               game.publisher.first,
                               style: const TextStyle(fontSize: 13, color: Colors.white),
                             ),
                             const SizedBox(height: 9),
                             Row(
+                              //pour afficher le prix 
                               children: [
+                                //si le prix n'est pas gratuit
                                 if (game.price != "Gratuit")
                                   const Text(
+                                    //on vient afficher 'prix' avant d'afficher sa valeur 
                                     "Prix: ",
                                     style: TextStyle(
                                         fontSize: 13,
                                         color: Colors.white,
                                         decoration: TextDecoration.underline),
                                   ),
+                                  //on affiche la valeur du prix 
                                 Text(
                                   game.price,
                                   style: const TextStyle(fontSize: 12, color: Colors.white),
@@ -181,11 +201,13 @@ Widget build(BuildContext context) {
                         ),
                       ),
                     ),
+                    //Bouton d'affichage des infos du jeu
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           PageRouteBuilder(
+                            //on appelle les infos du jeux si on clique sur le bouton
                             pageBuilder: (_, __, ___) => InfoJeu(gameId: game.id.toString()),
                           ),
                         );
@@ -204,6 +226,7 @@ Widget build(BuildContext context) {
                           child: Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10),
                             child: Text(
+                              //Affichage du titre du bouton
                               "En savoir plus",
                               style: TextStyle(
                                 color: Colors.white,
@@ -226,6 +249,7 @@ Widget build(BuildContext context) {
           child: Text('${snapshot.error}'),
         );
       }
+      //Si on a des données à charger, on met un indicateur jusqu'à ce que ce soit fini. 
       return const Center(
         child: CircularProgressIndicator(),
       );

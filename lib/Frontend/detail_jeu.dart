@@ -27,6 +27,7 @@ class _InfoJeuState extends State<InfoJeu> {
   @override
   void initState() {
     super.initState();
+    //On va fecth nos informations (Les commentaires et les infos du jeu)
     _gameDetailsFuture = steamAPI.fetchGameDetails(widget.gameId);
     _gameCommentairesFuture = steamAPI.fetchGameReviews(widget.gameId);
   }
@@ -339,6 +340,8 @@ class GameCardWidget extends StatelessWidget {
 
 //Pour les bouttons et gérer leur couleur
 class ButtonsWidget extends StatelessWidget {
+
+  //Pour voir quand est ce que le bouton description ou Reviews est selectionné pour afficher soit l'un soit l'autre
   final VoidCallback onDescriptionPressed;
   final VoidCallback onReviewsPressed;
   final bool showingReviews;

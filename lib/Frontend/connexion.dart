@@ -116,6 +116,7 @@ class _LoginPageState extends State<Connexion> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 1.0),
+                      //texte principal
                       child: const Text(
                         'Bienvenue !',
                         style: TextStyle(
@@ -129,6 +130,7 @@ class _LoginPageState extends State<Connexion> {
                     ),
 
                     Container(
+                      //Ajout de padding
                       padding: const EdgeInsets.fromLTRB(70.0, 20.0, 70.0, 40.0),
                       child: const Text(
                         'Veuillez vous connecter ou créer un nouveau compte pour utiliser l\'application.',
@@ -149,6 +151,7 @@ class _LoginPageState extends State<Connexion> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
+                      //Email 
                       labelText: "Email",
                       labelStyle: const TextStyle(
                         fontFamily: 'Google Sans',
@@ -168,6 +171,7 @@ class _LoginPageState extends State<Connexion> {
                           color: Color(0xFF1e262c),
                         ),
                       ),
+                      //Gestion des erreurs 
                       errorText: _emailError,
                       errorStyle: const TextStyle(color: Colors.red),
                       
@@ -207,6 +211,7 @@ class _LoginPageState extends State<Connexion> {
                           color: Color(0xFF1e262c),
                         ),
                       ),
+                      //gEstion des eerreurs 
                       errorText: _passwordError,
                       errorStyle: const TextStyle(color: Colors.red),
                     ),
@@ -222,6 +227,7 @@ class _LoginPageState extends State<Connexion> {
                 ElevatedButton(
                   //on appelle signin pour la connexion 
                   onPressed: _signIn,
+                  //Affichage du bouton se connecter 
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.fromLTRB(1.0, 20.0, 1.0, 20.0), backgroundColor: const Color(0xFF636AF6),
                     shape: RoundedRectangleBorder(
@@ -243,6 +249,7 @@ class _LoginPageState extends State<Connexion> {
                   onPressed: () {
                     Navigator.pushNamed(context, '/inscription');
                   },
+                  //Affichage du boutton pur aller au menu d'inscription
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white, backgroundColor: const Color(0xFF1a2025), padding: const EdgeInsets.fromLTRB(1.0, 20.0, 1.0, 20.0),
                     shape: RoundedRectangleBorder(
